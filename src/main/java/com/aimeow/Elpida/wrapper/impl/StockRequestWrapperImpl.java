@@ -64,20 +64,19 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
 
     @Override
     public List<TradeCalendarEntity> requestTradeCalendar(@NonNull GetTradeCalendarRequest getTradeCalendarRequest) {
-        return new ArrayList<>();
-//        if (getTradeCalendarRequest.getStartDate() == null || getTradeCalendarRequest.getEndDate() == null) {
-//            return new ArrayList<>();
-//        }
-//
-//        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-//        String startDateStr = formatter.format(getTradeCalendarRequest.getStartDate());
-//        String endDateStr = formatter.format(getTradeCalendarRequest.getEndDate());
-//
-//        JSONObject params = new JSONObject();
-//        params.put("start_date", startDateStr);
-//        params.put("end_date", endDateStr);
+        if (getTradeCalendarRequest.getStartDate() == null || getTradeCalendarRequest.getEndDate() == null) {
+            return new ArrayList<>();
+        }
 
-//        return null;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+        String startDateStr = formatter.format(getTradeCalendarRequest.getStartDate());
+        String endDateStr = formatter.format(getTradeCalendarRequest.getEndDate());
+
+        JSONObject params = new JSONObject();
+        params.put("start_date", startDateStr);
+        params.put("end_date", endDateStr);
+
+        return null;
     }
 
     @Override
