@@ -5,8 +5,10 @@ import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
 import com.aimeow.Elpida.request.GetTradeCalendarRequest;
 import com.aimeow.Elpida.request.StockListRequest;
+import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.NonNull;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -58,31 +60,46 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<StockListEntity> requestStockList(@NonNull StockListRequest stockListRequest) {
-        return null;
+    public List<StockListEntity> requestStockList(@NonNull String status) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("list_status", status);
+        JSONObject object = request(STOCK_LIST, params);
+
+        List<StockListEntity> stockListEntities = new ArrayList<>();
+        object.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
+            JSONArray stockData = JSONArray.parseArray(jsonObject.toString());
+            StockListEntity stockListEntity = new StockListEntity();
+            stockListEntity.setStockCode(stockData.getString(0));
+            stockListEntity.setStockName(stockData.getString(2));
+            stockListEntity.setIndustry(stockData.getString(4));
+            stockListEntity.setMarket(stockData.getString(5));
+            stockListEntities.add(stockListEntity);
+        });
+
+        return stockListEntities;
     }
 
     @Override
-    public List<TradeCalendarEntity> requestTradeCalendar(@NonNull GetTradeCalendarRequest getTradeCalendarRequest) {
-        if (getTradeCalendarRequest.getStartDate() == null || getTradeCalendarRequest.getEndDate() == null) {
-            return new ArrayList<>();
-        }
-
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-        String startDateStr = formatter.format(getTradeCalendarRequest.getStartDate());
-        String endDateStr = formatter.format(getTradeCalendarRequest.getEndDate());
+    public List<TradeCalendarEntity> requestTradeCalendar(@NonNull Date startDate, @NonNull Date endDate) throws Exception {
+        String startDateStr = DateUtil.formatDateToString(startDate, "yyyyMMdd");
+        String endDateStr = DateUtil.formatDateToString(endDate, "yyyyMMdd");
 
         JSONObject params = new JSONObject();
         params.put("start_date", startDateStr);
         params.put("end_date", endDateStr);
 
-        return null;
-    }
+        JSONObject object = request(TRADE_CALENDAR, params);
+        List<TradeCalendarEntity> tradeCalendarEntities = new ArrayList<>();
+        object.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
+            JSONArray tradeCalArray = JSONArray.parseArray(jsonObject.toString());
+            TradeCalendarEntity tradeCalendarEntity = new TradeCalendarEntity();
+            tradeCalendarEntity.setCalDate(DateUtil.formatStringToDate(tradeCalArray.getString(1), "yyyyMMdd"));
+            tradeCalendarEntity.setExchange(tradeCalArray.getString(0));
+            tradeCalendarEntity.setIsOpen(tradeCalArray.getBoolean(2));
+            tradeCalendarEntities.add(tradeCalendarEntity);
+        });
 
-    @Override
-    public String test() {
-        redisUtil.set("hello", "world");
-        return "123456";
+        return tradeCalendarEntities;
     }
 
     private JSONObject request(String apiName , JSONObject params) throws Exception {
@@ -94,9 +111,9 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         rawObject.put("api_name", apiName);
         rawObject.put("token", TOKEN);
         rawObject.put("field", "");
-        rawObject.put("params", params.toJSONString());
+        rawObject.put("params", params);
         String raw = rawObject.toJSONString();
-
+        System.out.println(raw);
         httpPost.setEntity(new StringEntity(raw, ContentType.DEFAULT_TEXT));
 
         CloseableHttpResponse response = httpclient.execute(httpPost);
