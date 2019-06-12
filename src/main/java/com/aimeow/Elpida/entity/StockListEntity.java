@@ -1,4 +1,4 @@
-package com.aimeow.entity;
+package com.aimeow.Elpida.entity;
 
 import lombok.Data;
 
