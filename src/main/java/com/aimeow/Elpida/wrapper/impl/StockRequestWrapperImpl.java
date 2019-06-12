@@ -3,8 +3,6 @@ package com.aimeow.Elpida.wrapper.impl;
 import com.aimeow.Elpida.entity.DailyStockEntity;
 import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
-import com.aimeow.Elpida.request.GetTradeCalendarRequest;
-import com.aimeow.Elpida.request.StockListRequest;
 import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;

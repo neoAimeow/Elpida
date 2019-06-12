@@ -4,7 +4,6 @@ import com.aimeow.Elpida.controller.StockController;
 import com.aimeow.Elpida.entity.DailyStockEntity;
 import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
-import com.aimeow.Elpida.request.GetTradeCalendarRequest;
 import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;
@@ -29,11 +28,8 @@ public class StockControllerImpl implements StockController {
 
     @Override
     public List<TradeCalendarEntity> updateTradeCalendarWithYear(@NonNull String year) throws Exception {
-        GetTradeCalendarRequest getTradeCalendarRequest = new GetTradeCalendarRequest();
         String startDateStr = year + "-01-01 00:00:00";
         String endDateStr = year + "-12-31 23:59:59";
-        getTradeCalendarRequest.setStartDate(DateUtil.formatStringToDate(startDateStr,DATE_FORMAT_FULL));
-        getTradeCalendarRequest.setEndDate(DateUtil.formatStringToDate(endDateStr,DATE_FORMAT_FULL));
 
         List<TradeCalendarEntity> tradeCalendarEntities = stockRequestWrapper.requestTradeCalendar(
                 DateUtil.formatStringToDate(startDateStr,DATE_FORMAT_FULL),

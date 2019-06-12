@@ -8,4 +8,5 @@ import org.springframework.stereotype.Component;
 @Configuration
 @EnableScheduling
 public class DailyStockDataScheduleTask {
+
 }

@@ -3,8 +3,6 @@ package com.aimeow.Elpida.wrapper;
 import com.aimeow.Elpida.entity.DailyStockEntity;
 import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
-import com.aimeow.Elpida.request.GetTradeCalendarRequest;
-import com.aimeow.Elpida.request.StockListRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
