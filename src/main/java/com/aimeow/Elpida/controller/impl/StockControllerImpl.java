@@ -6,10 +6,13 @@ import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
 import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
+import com.aimeow.Elpida.tools.Result;
+import com.aimeow.Elpida.tools.ResultUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;
 import com.alibaba.fastjson.JSONArray;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -25,9 +28,10 @@ public class StockControllerImpl implements StockController {
 
     @Autowired private StockRequestWrapper stockRequestWrapper;
     @Autowired private RedisUtil redisUtil;
+    @Autowired private MongoTemplate mongoTemplate;
 
     @Override
-    public List<TradeCalendarEntity> updateTradeCalendarWithYear(@NonNull String year) throws Exception {
+    public Result<List<TradeCalendarEntity>> updateTradeCalendarWithYear(@NonNull String year) throws Exception {
         String startDateStr = year + "-01-01 00:00:00";
         String endDateStr = year + "-12-31 23:59:59";
 
@@ -36,20 +40,30 @@ public class StockControllerImpl implements StockController {
                 DateUtil.formatStringToDate(endDateStr,DATE_FORMAT_FULL)
         );
 
-        redisUtil.set(TRADE_CAL_PRE + year, JSONArray.toJSONString(tradeCalendarEntities));
+        Result<List<TradeCalendarEntity>> result = ResultUtil.buildSuccessResult(new Result<>(), tradeCalendarEntities);
+        redisUtil.set(TRADE_CAL_PRE + year, JSONArray.toJSONString(result));
 
-        return tradeCalendarEntities;
+        return result;
     }
 
     @Override
-    public List<DailyStockEntity> recordDailyStockWithTradeDate(@NonNull String tradeDate) throws Exception {
-        return null;
+    public Result<List<DailyStockEntity>> recordDailyStockWithTradeDate(@NonNull String tradeDate) throws Exception {
+        List<DailyStockEntity> dailyStockEntities = stockRequestWrapper.requestDailyStockInfoWithTradeDate(
+                DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"));
+        Result<List<DailyStockEntity>> result = ResultUtil.buildSuccessResult(new Result<>(), dailyStockEntities);
+
+        for (DailyStockEntity dailyStockEntity : dailyStockEntities) {
+            mongoTemplate.save(dailyStockEntity);
+        }
+        return result;
     }
 
     @Override
-    public List<StockListEntity> updateStockListWithStatus(@NonNull String status) throws Exception {
+    public Result<List<StockListEntity>> updateStockListWithStatus(@NonNull String status) throws Exception {
         List<StockListEntity> stockListEntities = stockRequestWrapper.requestStockList(status);
-        redisUtil.set(STOCK_LIST_PRE + status, JSONArray.toJSONString(stockListEntities));
-        return stockListEntities;
+        Result<List<StockListEntity>> result = ResultUtil.buildSuccessResult(new Result<>(), stockListEntities);
+
+        redisUtil.set(STOCK_LIST_PRE + status, JSONArray.toJSONString(result));
+        return result;
     }
 }

@@ -6,6 +6,7 @@ import com.aimeow.Elpida.entity.TradeCalendarEntity;
 import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.NonNull;
@@ -37,23 +38,31 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private RedisUtil redisUtil;
 
     @Override
-    public List<DailyStockEntity> requestDailyStockInfoWithTradeDate(@NonNull Date tradeDate) {
-
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-        String dateString = formatter.format(tradeDate);
-
+    public List<DailyStockEntity> requestDailyStockInfoWithTradeDate(@NonNull Date tradeDate) throws Exception {
         JSONObject params = new JSONObject();
-        params.put("trade_date", dateString);
+        params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
 
-        try {
-            JSONObject result = request(DAILY_STOCK, params);
-            //parse JSONObject to Entity;
-
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-            return null;
-        }
-        return null;
+        JSONObject result = request(DAILY_STOCK, params);
+        //parse JSONObject to Entity;
+        List<DailyStockEntity> dailyStockEntities = new ArrayList<>();
+        result.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
+            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(jsonObject));
+            DailyStockEntity dailyStockEntity = new DailyStockEntity();
+            dailyStockEntity.setStockCode(stockData.getString(0));
+            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                    stockData.getString(1), "yyyyMMdd"));
+            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
+            dailyStockEntity.setHighPrice(stockData.getFloat(3));
+            dailyStockEntity.setLowPrice(stockData.getFloat(4));
+            dailyStockEntity.setClosePrice(stockData.getFloat(5));
+            dailyStockEntity.setPrePrice(stockData.getFloat(6));
+            dailyStockEntity.setChangePrice(stockData.getFloat(7));
+            dailyStockEntity.setChangeRate(stockData.getFloat(8));
+            dailyStockEntity.setVolume(stockData.getFloat(9));
+            dailyStockEntity.setAmount(stockData.getFloat(10));
+            dailyStockEntities.add(dailyStockEntity);
+        });
+        return dailyStockEntities;
 
     }
 

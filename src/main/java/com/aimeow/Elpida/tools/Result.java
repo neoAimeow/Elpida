@@ -3,6 +3,7 @@ package com.aimeow.Elpida.tools;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Data
 public class Result<T> implements Serializable {
@@ -11,4 +12,5 @@ public class Result<T> implements Serializable {
     protected T model;
     protected String errCode;
     protected String errorMsg;
+    protected String timestamp;
 }
