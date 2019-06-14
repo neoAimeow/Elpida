@@ -1,6 +1,7 @@
 package com.aimeow.Elpida.wrapper;
 
 import com.aimeow.Elpida.entity.DailyStockEntity;
+import com.aimeow.Elpida.entity.StockBasicEntity;
 import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,9 @@ public interface StockRequestWrapper {
 
     /** 通过交易时间来获取当时所有股票的日线行情 */
     List<DailyStockEntity> requestDailyStockInfoWithTradeDate(Date tradeDate) throws Exception;
+
+    /** 通过交易时间来 获取当时所有股票的基础信息数据 */
+    List<StockBasicEntity> requestBasicStockInfoWithTradeDate(Date tradeDate) throws Exception;
 
     /** 获取各大交易所交易日历数据,默认提取的是上交所 */
     List<TradeCalendarEntity> requestTradeCalendar(Date startDate, Date endDate) throws Exception;

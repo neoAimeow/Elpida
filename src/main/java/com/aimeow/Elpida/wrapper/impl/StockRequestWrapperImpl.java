@@ -1,6 +1,7 @@
 package com.aimeow.Elpida.wrapper.impl;
 
 import com.aimeow.Elpida.entity.DailyStockEntity;
+import com.aimeow.Elpida.entity.StockBasicEntity;
 import com.aimeow.Elpida.entity.StockListEntity;
 import com.aimeow.Elpida.entity.TradeCalendarEntity;
 import com.aimeow.Elpida.tools.DateUtil;
@@ -31,6 +32,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String API_URI = "http://api.waditu.com";
     private static final String STOCK_LIST = "stock_basic";
     private static final String DAILY_STOCK = "daily";
+    private static final String BASIC_STOCK_INFO = "daily_basic";
     private static final String TRADE_CALENDAR = "trade_cal";
     private static final String TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
 
@@ -64,6 +66,38 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         });
         return dailyStockEntities;
 
+    }
+
+    @Override
+    public List<StockBasicEntity> requestBasicStockInfoWithTradeDate(Date tradeDate) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
+
+        JSONObject result = request(BASIC_STOCK_INFO, params);
+        List<StockBasicEntity> stockBasicEntities = new ArrayList<>();
+
+        result.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
+            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(jsonObject));
+            StockBasicEntity stockBasicEntity = new StockBasicEntity();
+            stockBasicEntity.setStockCode(stockData.getString(0));
+            stockBasicEntity.setTradeDate(DateUtil.formatStringToDate(
+                    stockData.getString(1), "yyyyMMdd"));
+            stockBasicEntity.setTurnOverRate(stockData.getFloat(3));
+            stockBasicEntity.setTurnOverRateF(stockData.getFloat(4));
+            stockBasicEntity.setVolumeRatio(stockData.getFloat(5));
+            stockBasicEntity.setPe(stockData.getFloat(6));
+            stockBasicEntity.setPb(stockData.getFloat(8));
+            stockBasicEntity.setPs(stockData.getFloat(9));
+            stockBasicEntity.setTotalShare(stockData.getFloat(11));
+            stockBasicEntity.setFloatShare(stockData.getFloat(12));
+            stockBasicEntity.setFreeShare(stockData.getFloat(13));
+            stockBasicEntity.setTotalMv(stockData.getFloat(14));
+            stockBasicEntity.setCircMv(stockData.getFloat(15));
+
+            stockBasicEntities.add(stockBasicEntity);
+        });
+
+        return stockBasicEntities;
     }
 
     @Override
