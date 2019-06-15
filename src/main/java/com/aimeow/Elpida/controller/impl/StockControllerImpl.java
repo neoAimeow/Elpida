@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_FULL;
@@ -61,7 +63,7 @@ public class StockControllerImpl implements StockController {
     }
 
     @Override
-    public Result<List<StockBasicEntity>> getBasicStockDataWithTradeData(String tradeDate) throws Exception {
+    public Result<List<StockBasicEntity>> getBasicStockDataWithTradeDate(String tradeDate) throws Exception {
         List<StockBasicEntity> stockBasicEntities = stockRequestWrapper.requestBasicStockInfoWithTradeDate(
                 DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"));
         Result<List<StockBasicEntity>> result = ResultUtil.buildSuccessResult(new Result<>(), stockBasicEntities);
@@ -69,7 +71,7 @@ public class StockControllerImpl implements StockController {
     }
 
     @Override
-    public Result<List<DailyStockEntity>> getIndexStockDataWithTradeData(String tradeDate) throws Exception {
+    public Result<List<DailyStockEntity>> getIndexStockDataWithTradeDate(String tradeDate) throws Exception {
         List<String> indexList = new ArrayList<>();
         indexList.add("000001.SH");
         indexList.add("399001.SZ");
@@ -82,13 +84,61 @@ public class StockControllerImpl implements StockController {
                 obj -> {
                     try {
                         dailyStockEntities.add(stockRequestWrapper.requestIndexStockInfoWithCodeAndTradeDate(
-                                obj, DateUtil.formatStringToDate("tradeDate", "yyyyMMdd")));
+                                obj, DateUtil.formatStringToDate(tradeDate, "yyyyMMdd")));
                     } catch (Exception ex) {
                         System.out.println("getIndexStockDataWithTradeDataError:" + ex.getMessage());
                     }
                 }
         );
         return ResultUtil.buildSuccessResult(new Result<>(), dailyStockEntities);
+    }
+
+    @Override
+    public Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception {
+        List<String> srcList = new ArrayList<>();
+        srcList.add("sina");
+        srcList.add("wallstreetcn");
+        srcList.add("10jqka");
+        srcList.add("eastmoney");
+        srcList.add("yuncaijing");
+
+        List<NewsEntity> newsEntities = new ArrayList<>();
+
+        srcList.parallelStream().forEach(
+                obj -> {
+                    try {
+                        Integer tomorrow = Integer.valueOf(tradeDate) + 1;
+                        newsEntities.addAll(stockRequestWrapper.requestNewsWithDate(
+                                DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"),
+                                DateUtil.formatStringToDate(tomorrow.toString(), "yyyyMMdd"), obj));
+                    } catch (Exception ex) {
+                        System.out.println("getNewsWithTradeData:" + ex.getMessage());
+                    }
+                }
+        );
+
+        Comparator<NewsEntity> comparator = new Comparator<NewsEntity>() {
+            @Override
+            public int compare(NewsEntity o1, NewsEntity o2) {
+                if (o1.getDateTime().before(o2.getDateTime())) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        };
+
+        Collections.sort(newsEntities, comparator);
+
+        return ResultUtil.buildSuccessResult(new Result<>(), newsEntities);
+    }
+
+    @Override
+    public Result<List<HoldingSharesEntity>> getHoldingShareChangeWithTradeDate(String tradeDate) throws Exception {
+        List<HoldingSharesEntity> holdingSharesEntities = stockRequestWrapper.requestHoldingSharesChangeWithTradeDate(
+                DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"));
+
+        return ResultUtil.buildSuccessResult(new Result<>(), holdingSharesEntities);
     }
 
     @Override
@@ -101,8 +151,10 @@ public class StockControllerImpl implements StockController {
     @Override
     public Result<AnalyzeEntity> analyzeStockDataWithTradeData(@NonNull String tradeDate) throws Exception {
         List<DailyStockEntity> stockEntityList = getDailyStockWithTradeDate(tradeDate).getModel();
-        List<StockBasicEntity> stockBasicEntityList = getBasicStockDataWithTradeData(tradeDate).getModel();
+        List<StockBasicEntity> stockBasicEntityList = getBasicStockDataWithTradeDate(tradeDate).getModel();
         List<StockListEntity> stockListEntityList = getUpdateStockListWithStatus("L").getModel();
+        List<DailyStockEntity> indexStockList = getIndexStockDataWithTradeDate(tradeDate).getModel();
+        List<HoldingSharesEntity> holdingSharesEntities = getHoldingShareChangeWithTradeDate(tradeDate).getModel();
 
         List<FullStockEntity> fullStockEntityList = StockAssembler.assemblerStocks(stockBasicEntityList, stockEntityList, stockListEntityList);
 
@@ -119,6 +171,8 @@ public class StockControllerImpl implements StockController {
         analyzeEntity.setLimitDownStocks(limitDownList);
         analyzeEntity.setTopStocks(topList);
         analyzeEntity.setExplodeStocks(explodeList);
+        analyzeEntity.setIndexStocks(indexStockList);
+        analyzeEntity.setHoldingSharesList(holdingSharesEntities);
 
         for (FullStockEntity fullStockEntity : fullStockEntityList) {
             //涨幅大于0%;
@@ -139,7 +193,6 @@ public class StockControllerImpl implements StockController {
             //涨幅大于9.8%
             if (fullStockEntity.getChangeRate() > 9.8) {
                 limitUpList.add(fullStockEntity);
-
             }
 
             //跌幅大于9.8%
@@ -205,7 +258,7 @@ public class StockControllerImpl implements StockController {
                             analyzeStockDataWithTradeData(dateStr);
                         }
                     } catch (Exception ex) {
-                        System.out.println("hello ex");
+                        System.out.println("hello ex" + ex.getMessage());
                     }
 
                 }

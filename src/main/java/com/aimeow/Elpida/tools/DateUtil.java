@@ -66,7 +66,7 @@ public class DateUtil {
             return sdf.parse(date);
         } catch (ParseException ex) {
             ex.printStackTrace();
-            throw new RuntimeException(ex.toString());
+            return null;
         }
     }
 
@@ -267,8 +267,6 @@ public class DateUtil {
     /**
      * 计算某年某周内的所有日期(七天)
      *
-     * @param yearNum
-     * @param weekNum
      * @return yyyy-MM-dd 格式的日期列表
      */
     public static List<String> getWeekDays(int year, int weekOfYear,

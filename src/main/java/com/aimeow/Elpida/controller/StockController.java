@@ -25,10 +25,17 @@ public interface StockController {
 
     /** 获得某一天所有股票的基本信息 yyyyMMdd */
     @RequestMapping(value = "getBasicStockData", method = RequestMethod.GET)
-    Result<List<StockBasicEntity>> getBasicStockDataWithTradeData(String tradeDate) throws Exception;
+    Result<List<StockBasicEntity>> getBasicStockDataWithTradeDate(String tradeDate) throws Exception;
 
+    /** 获得某一天指数行情，目前有上证、深圳成指、创业板指、中小板指 yyyyMMdd */
     @RequestMapping(value = "getIndexStockData", method = RequestMethod.GET)
-    Result<List<DailyStockEntity>> getIndexStockDataWithTradeData(String tradeDate) throws Exception;
+    Result<List<DailyStockEntity>> getIndexStockDataWithTradeDate(String tradeDate) throws Exception;
+
+    @RequestMapping(value = "getNews", method = RequestMethod.GET)
+    Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception;
+
+    @RequestMapping(value = "getHoldingSharesChange", method = RequestMethod.GET)
+    Result<List<HoldingSharesEntity>> getHoldingShareChangeWithTradeDate(String tradeDate) throws Exception;
 
     @RequestMapping(value = "/getStockListWithStatus", method = RequestMethod.GET)
     /**  L上市 D退市 P暂停上市 */

@@ -29,5 +29,11 @@ public class AnalyzeEntity {
     private List<FullStockEntity> limitDownStocks;
     /** 炸板股 */
     private List<FullStockEntity> explodeStocks;
+    /** 指数 */
+    private List<DailyStockEntity> indexStocks;
+    /** 当日新闻 */
+    private List<NewsEntity> news;
+    /** 增减持信息 */
+    private List<HoldingSharesEntity> holdingSharesList;
 
 }

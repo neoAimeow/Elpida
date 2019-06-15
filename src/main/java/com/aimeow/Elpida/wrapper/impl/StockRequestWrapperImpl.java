@@ -1,9 +1,6 @@
 package com.aimeow.Elpida.wrapper.impl;
 
-import com.aimeow.Elpida.entity.DailyStockEntity;
-import com.aimeow.Elpida.entity.StockBasicEntity;
-import com.aimeow.Elpida.entity.StockListEntity;
-import com.aimeow.Elpida.entity.TradeCalendarEntity;
+import com.aimeow.Elpida.entity.*;
 import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;
@@ -22,9 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_FULL;
 
 @Component
 public class StockRequestWrapperImpl implements StockRequestWrapper {
@@ -35,6 +32,8 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String BASIC_STOCK_INFO = "daily_basic";
     private static final String TRADE_CALENDAR = "trade_cal";
     private static final String INDEX_DAILY = "index_daily";
+    private static final String NEWS = "news";
+    private static final String STK_HOLDER_TRADE = "stk_holdertrade";
     private static final String TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
 
     @Autowired
@@ -48,23 +47,33 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         JSONObject result = request(DAILY_STOCK, params);
         //parse JSONObject to Entity;
         List<DailyStockEntity> dailyStockEntities = new ArrayList<>();
-        result.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
-            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(jsonObject));
-            DailyStockEntity dailyStockEntity = new DailyStockEntity();
-            dailyStockEntity.setStockCode(stockData.getString(0));
-            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
-                    stockData.getString(1), "yyyyMMdd"));
-            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
-            dailyStockEntity.setHighPrice(stockData.getFloat(3));
-            dailyStockEntity.setLowPrice(stockData.getFloat(4));
-            dailyStockEntity.setClosePrice(stockData.getFloat(5));
-            dailyStockEntity.setPrePrice(stockData.getFloat(6));
-            dailyStockEntity.setChangePrice(stockData.getFloat(7));
-            dailyStockEntity.setChangeRate(stockData.getFloat(8));
-            dailyStockEntity.setVolume(stockData.getFloat(9));
-            dailyStockEntity.setAmount(stockData.getFloat(10));
-            dailyStockEntities.add(dailyStockEntity);
-        });
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+                            DailyStockEntity dailyStockEntity = new DailyStockEntity();
+                            dailyStockEntity.setStockCode(stockData.getString(0));
+                            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                                    stockData.getString(1), "yyyyMMdd"));
+                            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
+                            dailyStockEntity.setHighPrice(stockData.getFloat(3));
+                            dailyStockEntity.setLowPrice(stockData.getFloat(4));
+                            dailyStockEntity.setClosePrice(stockData.getFloat(5));
+                            dailyStockEntity.setPrePrice(stockData.getFloat(6));
+                            dailyStockEntity.setChangePrice(stockData.getFloat(7));
+                            dailyStockEntity.setChangeRate(stockData.getFloat(8));
+                            dailyStockEntity.setVolume(stockData.getFloat(9));
+                            dailyStockEntity.setAmount(stockData.getFloat(10));
+                            dailyStockEntities.add(dailyStockEntity);
+                        }
+                );
+            }
+        }
+
         return dailyStockEntities;
 
     }
@@ -77,26 +86,35 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         JSONObject result = request(BASIC_STOCK_INFO, params);
         List<StockBasicEntity> stockBasicEntities = new ArrayList<>();
 
-        result.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
-            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(jsonObject));
-            StockBasicEntity stockBasicEntity = new StockBasicEntity();
-            stockBasicEntity.setStockCode(stockData.getString(0));
-            stockBasicEntity.setTradeDate(DateUtil.formatStringToDate(
-                    stockData.getString(1), "yyyyMMdd"));
-            stockBasicEntity.setTurnOverRate(stockData.getFloat(3));
-            stockBasicEntity.setTurnOverRateF(stockData.getFloat(4));
-            stockBasicEntity.setVolumeRatio(stockData.getFloat(5));
-            stockBasicEntity.setPe(stockData.getFloat(6));
-            stockBasicEntity.setPb(stockData.getFloat(8));
-            stockBasicEntity.setPs(stockData.getFloat(9));
-            stockBasicEntity.setTotalShare(stockData.getFloat(11));
-            stockBasicEntity.setFloatShare(stockData.getFloat(12));
-            stockBasicEntity.setFreeShare(stockData.getFloat(13));
-            stockBasicEntity.setTotalMv(stockData.getFloat(14));
-            stockBasicEntity.setCircMv(stockData.getFloat(15));
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+                            StockBasicEntity stockBasicEntity = new StockBasicEntity();
+                            stockBasicEntity.setStockCode(stockData.getString(0));
+                            stockBasicEntity.setTradeDate(DateUtil.formatStringToDate(
+                                    stockData.getString(1), "yyyyMMdd"));
+                            stockBasicEntity.setTurnOverRate(stockData.getFloat(3));
+                            stockBasicEntity.setTurnOverRateF(stockData.getFloat(4));
+                            stockBasicEntity.setVolumeRatio(stockData.getFloat(5));
+                            stockBasicEntity.setPe(stockData.getFloat(6));
+                            stockBasicEntity.setPb(stockData.getFloat(8));
+                            stockBasicEntity.setPs(stockData.getFloat(9));
+                            stockBasicEntity.setTotalShare(stockData.getFloat(11));
+                            stockBasicEntity.setFloatShare(stockData.getFloat(12));
+                            stockBasicEntity.setFreeShare(stockData.getFloat(13));
+                            stockBasicEntity.setTotalMv(stockData.getFloat(14));
+                            stockBasicEntity.setCircMv(stockData.getFloat(15));
 
-            stockBasicEntities.add(stockBasicEntity);
-        });
+                            stockBasicEntities.add(stockBasicEntity);
+                        }
+                );
+            }
+        }
+
 
         return stockBasicEntities;
     }
@@ -110,40 +128,146 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         JSONObject result = request(INDEX_DAILY, params);
         DailyStockEntity dailyStockEntity = new DailyStockEntity();
 
-        result.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
-            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(jsonObject));
-            dailyStockEntity.setStockCode(stockData.getString(0));
-            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
-                    stockData.getString(1), "yyyyMMdd"));
-            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
-            dailyStockEntity.setHighPrice(stockData.getFloat(3));
-            dailyStockEntity.setLowPrice(stockData.getFloat(4));
-            dailyStockEntity.setClosePrice(stockData.getFloat(5));
-            dailyStockEntity.setPrePrice(stockData.getFloat(6));
-            dailyStockEntity.setChangePrice(stockData.getFloat(7));
-            dailyStockEntity.setChangeRate(stockData.getFloat(8));
-            dailyStockEntity.setVolume(stockData.getFloat(9));
-            dailyStockEntity.setAmount(stockData.getFloat(10));
-        });
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+                            dailyStockEntity.setStockCode(stockData.getString(0));
+                            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                                    stockData.getString(1), "yyyyMMdd"));
+                            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
+                            dailyStockEntity.setHighPrice(stockData.getFloat(3));
+                            dailyStockEntity.setLowPrice(stockData.getFloat(4));
+                            dailyStockEntity.setClosePrice(stockData.getFloat(5));
+                            dailyStockEntity.setPrePrice(stockData.getFloat(6));
+                            dailyStockEntity.setChangePrice(stockData.getFloat(7));
+                            dailyStockEntity.setChangeRate(stockData.getFloat(8));
+                            dailyStockEntity.setVolume(stockData.getFloat(9));
+                            dailyStockEntity.setAmount(stockData.getFloat(10));
+                        }
+                );
+            }
+        }
+
+
         return dailyStockEntity;
+    }
+
+    @Override
+    public List<NewsEntity> requestNewsWithDate(Date startDate, Date endDate, String src) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("start_date", DateUtil.formatDateToString(startDate, "yyyyMMdd"));
+        params.put("end_date", DateUtil.formatDateToString(endDate, "yyyyMMdd"));
+        params.put("src", src);
+
+        List<NewsEntity> newsEntities = new ArrayList<>();
+
+        JSONObject result = request(NEWS, params);
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        news -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(news));
+                            NewsEntity newsEntity = new NewsEntity();
+                            newsEntity.setDateTime(DateUtil.formatStringToDate(stockData.getString(0), DATE_FORMAT_FULL));
+                            newsEntity.setContent(stockData.getString(1));
+                            newsEntity.setTitle(stockData.getString(2));
+                            newsEntity.setSrc(src);
+                            newsEntities.add(newsEntity);
+                        }
+                );
+            }
+
+        }
+
+        return newsEntities;
+    }
+
+    @Override
+    public List<HoldingSharesEntity> requestHoldingSharesChangeWithTradeDate(Date tradeDate) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("ann_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
+        List<HoldingSharesEntity> holdingSharesEntities = new ArrayList<>();
+        JSONObject result = request(STK_HOLDER_TRADE, params);
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+
+                            HoldingSharesEntity holdingSharesEntity = new HoldingSharesEntity();
+                            holdingSharesEntity.setStockCode(stockData.getString(0));
+                            holdingSharesEntity.setAnnDate(DateUtil.formatStringToDate(stockData.getString(1), "yyyyMMdd"));
+                            holdingSharesEntity.setHolderName(stockData.getString(2));
+                            holdingSharesEntity.setHolderType(stockData.getString(3));
+                            holdingSharesEntity.setType(stockData.getString(4));
+                            holdingSharesEntity.setChangeVol(stockData.getFloat(5));
+                            holdingSharesEntity.setChangeRatio(stockData.getFloat(6));
+
+                            //去重
+                            Boolean hasEn = false;
+                            for (HoldingSharesEntity holdingSharesEntityTemp : holdingSharesEntities) {
+                                if (holdingSharesEntityTemp.getStockCode().equals(holdingSharesEntity.getStockCode())) {
+                                    hasEn = true;
+                                    //TODO: Combine
+                                }
+                            }
+
+                            if (!hasEn) {
+                                holdingSharesEntities.add(holdingSharesEntity);
+                            }
+                        }
+                );
+            }
+        }
+
+        List<StockListEntity> stockListEntityList = requestStockList("L");
+        for (HoldingSharesEntity holdingSharesEntity : holdingSharesEntities) {
+            for (StockListEntity stockListEntity : stockListEntityList) {
+                if (stockListEntity.getStockCode().equals(holdingSharesEntity.getStockCode())) {
+                    holdingSharesEntity.setStockName(stockListEntity.getStockName());
+                }
+                continue;
+            }
+        }
+
+        return holdingSharesEntities;
     }
 
     @Override
     public List<StockListEntity> requestStockList(@NonNull String status) throws Exception {
         JSONObject params = new JSONObject();
         params.put("list_status", status);
-        JSONObject object = request(STOCK_LIST, params);
+        JSONObject result = request(STOCK_LIST, params);
 
         List<StockListEntity> stockListEntities = new ArrayList<>();
-        object.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
-            JSONArray stockData = JSONArray.parseArray(jsonObject.toString());
-            StockListEntity stockListEntity = new StockListEntity();
-            stockListEntity.setStockCode(stockData.getString(0));
-            stockListEntity.setStockName(stockData.getString(2));
-            stockListEntity.setIndustry(stockData.getString(4));
-            stockListEntity.setMarket(stockData.getString(5));
-            stockListEntities.add(stockListEntity);
-        });
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(obj.toString());
+                            StockListEntity stockListEntity = new StockListEntity();
+                            stockListEntity.setStockCode(stockData.getString(0));
+                            stockListEntity.setStockName(stockData.getString(2));
+                            stockListEntity.setIndustry(stockData.getString(4));
+                            stockListEntity.setMarket(stockData.getString(5));
+                            stockListEntities.add(stockListEntity);
+                        }
+                );
+            }
+        }
 
         return stockListEntities;
     }
@@ -157,17 +281,25 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         params.put("start_date", startDateStr);
         params.put("end_date", endDateStr);
 
-        JSONObject object = request(TRADE_CALENDAR, params);
+        JSONObject result = request(TRADE_CALENDAR, params);
         List<TradeCalendarEntity> tradeCalendarEntities = new ArrayList<>();
-        object.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
-            JSONArray tradeCalArray = JSONArray.parseArray(jsonObject.toString());
-            TradeCalendarEntity tradeCalendarEntity = new TradeCalendarEntity();
-            tradeCalendarEntity.setCalDate(DateUtil.formatStringToDate(tradeCalArray.getString(1), "yyyyMMdd"));
-            tradeCalendarEntity.setExchange(tradeCalArray.getString(0));
-            tradeCalendarEntity.setIsOpen(tradeCalArray.getBoolean(2));
-            tradeCalendarEntities.add(tradeCalendarEntity);
-        });
 
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray tradeCalArray = JSONArray.parseArray(obj.toString());
+                            TradeCalendarEntity tradeCalendarEntity = new TradeCalendarEntity();
+                            tradeCalendarEntity.setCalDate(DateUtil.formatStringToDate(tradeCalArray.getString(1), "yyyyMMdd"));
+                            tradeCalendarEntity.setExchange(tradeCalArray.getString(0));
+                            tradeCalendarEntity.setIsOpen(tradeCalArray.getBoolean(2));
+                            tradeCalendarEntities.add(tradeCalendarEntity);
+                        }
+                );
+            }
+        }
         return tradeCalendarEntities;
     }
 
