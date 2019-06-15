@@ -69,6 +69,29 @@ public class StockControllerImpl implements StockController {
     }
 
     @Override
+    public Result<List<DailyStockEntity>> getIndexStockDataWithTradeData(String tradeDate) throws Exception {
+        List<String> indexList = new ArrayList<>();
+        indexList.add("000001.SH");
+        indexList.add("399001.SZ");
+        indexList.add("399006.SZ");
+        indexList.add("399005.SZ");
+
+        List<DailyStockEntity> dailyStockEntities = new ArrayList<>();
+
+        indexList.parallelStream().forEach(
+                obj -> {
+                    try {
+                        dailyStockEntities.add(stockRequestWrapper.requestIndexStockInfoWithCodeAndTradeDate(
+                                obj, DateUtil.formatStringToDate("tradeDate", "yyyyMMdd")));
+                    } catch (Exception ex) {
+                        System.out.println("getIndexStockDataWithTradeDataError:" + ex.getMessage());
+                    }
+                }
+        );
+        return ResultUtil.buildSuccessResult(new Result<>(), dailyStockEntities);
+    }
+
+    @Override
     public Result<List<StockListEntity>> getUpdateStockListWithStatus(String status) throws Exception {
         List<StockListEntity> stockListEntities = stockRequestWrapper.requestStockList(status);
         Result<List<StockListEntity>> result = ResultUtil.buildSuccessResult(new Result<>(), stockListEntities);
@@ -150,6 +173,44 @@ public class StockControllerImpl implements StockController {
 
     @Override
     public String test() throws Exception {
-        return redisUtil.get(ANALYZE_STOCK_PRE + "20190614");
+        List<String> yearList = new ArrayList<>();
+        yearList.add("2008");
+        yearList.add("2009");
+        yearList.add("2010");
+        yearList.add("2011");
+        yearList.add("2012");
+        yearList.add("2013");
+        yearList.add("2014");
+        yearList.add("2015");
+        yearList.add("2016");
+        yearList.add("2017");
+        yearList.add("2018");
+        yearList.add("2019");
+
+
+        yearList.parallelStream().forEach(
+                obj -> {
+                    try {
+                        List<TradeCalendarEntity> tradeCalendarEntities = getTradeCalendarWithYear(obj).getModel();
+                        List<TradeCalendarEntity> canTraderEntities = new ArrayList<>();
+                        for (TradeCalendarEntity tradeCalendarEntity : tradeCalendarEntities) {
+                            if (tradeCalendarEntity.getIsOpen()) {
+                                canTraderEntities.add(tradeCalendarEntity);
+                            }
+                        }
+
+                        for (TradeCalendarEntity tradeCalendarEntity : canTraderEntities) {
+                            String dateStr = DateUtil.formatDateToString(tradeCalendarEntity.getCalDate(), "yyyyMMdd");
+                            System.out.println(dateStr);
+                            analyzeStockDataWithTradeData(dateStr);
+                        }
+                    } catch (Exception ex) {
+                        System.out.println("hello ex");
+                    }
+
+                }
+        );
+
+        return "success";
     }
 }

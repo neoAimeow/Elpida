@@ -34,6 +34,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String DAILY_STOCK = "daily";
     private static final String BASIC_STOCK_INFO = "daily_basic";
     private static final String TRADE_CALENDAR = "trade_cal";
+    private static final String INDEX_DAILY = "index_daily";
     private static final String TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
 
     @Autowired
@@ -101,6 +102,33 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
+    public DailyStockEntity requestIndexStockInfoWithCodeAndTradeDate(String tsCode, Date tradeDate) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("ts_code", tsCode);
+        params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
+
+        JSONObject result = request(INDEX_DAILY, params);
+        DailyStockEntity dailyStockEntity = new DailyStockEntity();
+
+        result.getJSONObject("data").getJSONArray("items").stream().forEach(jsonObject -> {
+            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(jsonObject));
+            dailyStockEntity.setStockCode(stockData.getString(0));
+            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                    stockData.getString(1), "yyyyMMdd"));
+            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
+            dailyStockEntity.setHighPrice(stockData.getFloat(3));
+            dailyStockEntity.setLowPrice(stockData.getFloat(4));
+            dailyStockEntity.setClosePrice(stockData.getFloat(5));
+            dailyStockEntity.setPrePrice(stockData.getFloat(6));
+            dailyStockEntity.setChangePrice(stockData.getFloat(7));
+            dailyStockEntity.setChangeRate(stockData.getFloat(8));
+            dailyStockEntity.setVolume(stockData.getFloat(9));
+            dailyStockEntity.setAmount(stockData.getFloat(10));
+        });
+        return dailyStockEntity;
+    }
+
+    @Override
     public List<StockListEntity> requestStockList(@NonNull String status) throws Exception {
         JSONObject params = new JSONObject();
         params.put("list_status", status);
@@ -154,7 +182,6 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         rawObject.put("field", "");
         rawObject.put("params", params);
         String raw = rawObject.toJSONString();
-        System.out.println(raw);
         httpPost.setEntity(new StringEntity(raw, ContentType.DEFAULT_TEXT));
 
         CloseableHttpResponse response = httpclient.execute(httpPost);

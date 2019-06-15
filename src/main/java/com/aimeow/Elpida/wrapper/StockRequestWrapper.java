@@ -23,6 +23,8 @@ public interface StockRequestWrapper {
     /** 通过交易时间来 获取当时所有股票的基础信息数据 */
     List<StockBasicEntity> requestBasicStockInfoWithTradeDate(Date tradeDate) throws Exception;
 
+    DailyStockEntity requestIndexStockInfoWithCodeAndTradeDate(String tsCode, Date tradeDate) throws Exception;
+
     /** 获取各大交易所交易日历数据,默认提取的是上交所 */
     List<TradeCalendarEntity> requestTradeCalendar(Date startDate, Date endDate) throws Exception;
 

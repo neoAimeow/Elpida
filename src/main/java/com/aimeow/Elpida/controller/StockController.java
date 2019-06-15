@@ -27,6 +27,9 @@ public interface StockController {
     @RequestMapping(value = "getBasicStockData", method = RequestMethod.GET)
     Result<List<StockBasicEntity>> getBasicStockDataWithTradeData(String tradeDate) throws Exception;
 
+    @RequestMapping(value = "getIndexStockData", method = RequestMethod.GET)
+    Result<List<DailyStockEntity>> getIndexStockDataWithTradeData(String tradeDate) throws Exception;
+
     @RequestMapping(value = "/getStockListWithStatus", method = RequestMethod.GET)
     /**  L上市 D退市 P暂停上市 */
     Result<List<StockListEntity>> getUpdateStockListWithStatus(String status) throws Exception;
