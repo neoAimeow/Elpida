@@ -396,7 +396,6 @@ public class DateUtil {
     /**
      * 计算是否包含当前日期
      *
-     * @param datys
      * @return
      */
     public static boolean isContainCurrent(List<String> dates) {
@@ -415,7 +414,6 @@ public class DateUtil {
     /**
      * 从date开始计算time天后的日期
      *
-     * @param date
      * @param time
      * @return
      * @throws ParseException
@@ -427,7 +425,7 @@ public class DateUtil {
             Date date = formatStringToDate(startDate, DATE_FORMAT_YMD);
             Calendar c = Calendar.getInstance();
             c.setTime(date);
-            c.set(Calendar.DAY_OF_YEAR, time);
+            c.set(Calendar.DATE, time);
             date = c.getTime();
             resultDate = formatDateToString(date, DATE_FORMAT_YMD);
         }

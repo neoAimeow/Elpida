@@ -2,10 +2,15 @@ package com.aimeow.Elpida.entity;
 
 import lombok.Data;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
 public class AnalyzeEntity {
+    private Date tradeDate;
+
+    /** 当前市场情绪 */
+    private String emotion;
     /** 涨停数 */
     private Integer limitUpAmount;
     /** 跌停数 */
@@ -21,6 +26,9 @@ public class AnalyzeEntity {
     /** 跌数 */
     private Integer downAmount;
 
+    /** 沪深港通资金流向 */
+    private MoneyFlowEntity moneyFlow;
+
     /** 涨停股 */
     private List<FullStockEntity> limitUpStocks;
     /** 一字板股 */
@@ -31,8 +39,6 @@ public class AnalyzeEntity {
     private List<FullStockEntity> explodeStocks;
     /** 指数 */
     private List<DailyStockEntity> indexStocks;
-    /** 当日新闻 */
-    private List<NewsEntity> news;
     /** 增减持信息 */
     private List<HoldingSharesEntity> holdingSharesList;
 

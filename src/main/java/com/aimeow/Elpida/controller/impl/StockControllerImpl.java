@@ -18,12 +18,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_FULL;
+import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_YMD;
 
 @Component
 public class StockControllerImpl implements StockController {
@@ -155,12 +153,63 @@ public class StockControllerImpl implements StockController {
     }
 
     @Override
+    public Result<AnalyzeEntity> getAnalysisResultWithTradeDate(String tradeDate) throws Exception {
+        String dataStr = redisUtil.get(ANALYZE_STOCK_PRE + tradeDate);
+        JSONObject jsonObject = JSONObject.parseObject(dataStr);
+        JSONObject model = jsonObject.getJSONObject("model");
+        AnalyzeEntity analyzeEntity = JSONObject.parseObject(JSON.toJSONString(model), AnalyzeEntity.class);
+
+        return ResultUtil.buildSuccessResult(new Result<>(), analyzeEntity);
+    }
+
+    @Override
+    public Result<List<AnalyzeEntity>> getLastTwentyDaysAnalysisResultWithTradeDate(String tradeDate) throws Exception {
+        Date dateAfter = DateUtil.formatStringToDate(tradeDate, "yyyyMMdd");
+        String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
+        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -7);
+        Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
+
+        List<AnalyzeEntity> analyzeEntities = new ArrayList<>();
+
+        List<TradeCalendarEntity> tradeCalendarEntities = stockRequestWrapper.requestTradeCalendar(dateBefore, dateAfter);
+        tradeCalendarEntities.parallelStream().forEach(
+                obj -> {
+                    try {
+                        if (obj.getIsOpen()) {
+                            AnalyzeEntity analyzeEntity = getAnalysisResultWithTradeDate(
+                                    DateUtil.formatDateToString(obj.getCalDate(), "yyyyMMdd")).getModel();
+                            analyzeEntities.add(analyzeEntity);
+                        }
+                    } catch (Exception ex) {
+                        System.out.println("getLastTwentyDaysAnalysisResultError" + ex.getMessage());
+                    }
+                }
+        );
+
+        Comparator<AnalyzeEntity> comparator = new Comparator<AnalyzeEntity>() {
+            @Override
+            public int compare(AnalyzeEntity o1, AnalyzeEntity o2) {
+                if (o1.getTradeDate().before(o2.getTradeDate())) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        };
+
+        Collections.sort(analyzeEntities, comparator);
+
+        return ResultUtil.buildSuccessResult(new Result<>(), analyzeEntities);
+    }
+
+    @Override
     public Result<AnalyzeEntity> analyzeStockDataWithTradeData(@NonNull String tradeDate) throws Exception {
         List<DailyStockEntity> stockEntityList = getDailyStockWithTradeDate(tradeDate).getModel();
         List<StockBasicEntity> stockBasicEntityList = getBasicStockDataWithTradeDate(tradeDate).getModel();
         List<StockListEntity> stockListEntityList = getUpdateStockListWithStatus("L").getModel();
         List<DailyStockEntity> indexStockList = getIndexStockDataWithTradeDate(tradeDate).getModel();
         List<HoldingSharesEntity> holdingSharesEntities = getHoldingShareChangeWithTradeDate(tradeDate).getModel();
+        MoneyFlowEntity moneyFlowEntity = getMoneyFlowWithTradeDate(tradeDate).getModel();
 
         List<FullStockEntity> fullStockEntityList = StockAssembler.assemblerStocks(stockBasicEntityList, stockEntityList, stockListEntityList);
 
@@ -179,6 +228,8 @@ public class StockControllerImpl implements StockController {
         analyzeEntity.setExplodeStocks(explodeList);
         analyzeEntity.setIndexStocks(indexStockList);
         analyzeEntity.setHoldingSharesList(holdingSharesEntities);
+        analyzeEntity.setMoneyFlow(moneyFlowEntity);
+        analyzeEntity.setTradeDate(DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"));
 
         for (FullStockEntity fullStockEntity : fullStockEntityList) {
             //涨幅大于0%;
@@ -230,6 +281,59 @@ public class StockControllerImpl implements StockController {
         return analyzeEntityResult;
     }
 
+//    private String analyzeEmotionWithAnalyzeEntities(List<AnalyzeEntity> analyzeEntities) {
+//
+//    }
+
+    private Map<String, List<SimpleStockEntity>> analyzeContinuousStocksWithAnalyzeEntities(List<AnalyzeEntity> analyzeEntities) {
+        Map<SimpleStockEntity, String> simpleStockEntityIntegerMap = new HashMap<>();
+
+
+        //初始化生成map
+        if (analyzeEntities.size() > 0) {
+            List<FullStockEntity> fullStockEntities = analyzeEntities.get(0).getLimitUpStocks();
+            for (FullStockEntity fullStockEntity : fullStockEntities) {
+                SimpleStockEntity simpleStockEntity = new SimpleStockEntity();
+                simpleStockEntity.setStockCode(fullStockEntity.getStockCode());
+                simpleStockEntity.setStockName(fullStockEntity.getStockName());
+                simpleStockEntity.setFlag(false);
+                simpleStockEntityIntegerMap.put(simpleStockEntity, "0");
+            }
+        }
+
+        for (AnalyzeEntity analyzeEntity : analyzeEntities) {
+            List<FullStockEntity> limitUpList = analyzeEntity.getLimitUpStocks();
+            for (FullStockEntity fullStockEntity : limitUpList) {
+
+                SimpleStockEntity target = null;
+                for (Map.Entry<SimpleStockEntity, String> entry : simpleStockEntityIntegerMap.entrySet()) {
+                    SimpleStockEntity simpleStockEntity = entry.getKey();
+                    if (simpleStockEntity.getStockCode().equals(fullStockEntity.getStockCode())) {
+                        target = simpleStockEntity;
+                    }
+                }
+
+                if (target != null) {
+                    simpleStockEntityIntegerMap.put(target, Integer.toString(Integer.valueOf(simpleStockEntityIntegerMap.get(target)) + 1));
+                }
+            }
+        }
+
+        Map<String, List<SimpleStockEntity>> myNewHashMap = new HashMap<>();
+
+        for(Map.Entry<SimpleStockEntity, String> entry : simpleStockEntityIntegerMap.entrySet()) {
+            if (myNewHashMap.get(entry.getValue()) == null) {
+                List<SimpleStockEntity> simpleStockEntities = new ArrayList<>();
+                myNewHashMap.put(entry.getValue(), simpleStockEntities);
+            }
+            List<SimpleStockEntity> simpleStockEntities = myNewHashMap.get(entry.getValue());
+            simpleStockEntities.add(entry.getKey());
+            myNewHashMap.put(entry.getValue(), simpleStockEntities);
+        }
+
+        return myNewHashMap;
+    }
+
     @Override
     public String test() throws Exception {
         List<String> yearList = new ArrayList<>();
@@ -271,5 +375,11 @@ public class StockControllerImpl implements StockController {
         );
 
         return "success";
+    }
+
+    @Override
+    public String test2() throws Exception {
+        List<AnalyzeEntity> analyzeEntities = getLastTwentyDaysAnalysisResultWithTradeDate("20190614").getModel();
+        return JSON.toJSONString(analyzeContinuousStocksWithAnalyzeEntities(analyzeEntities));
     }
 }

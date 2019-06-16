@@ -48,10 +48,21 @@ public interface StockController {
     @RequestMapping(value = "getMoneyFlow", method = RequestMethod.GET)
     Result<MoneyFlowEntity> getMoneyFlowWithTradeDate(String tradeDate) throws Exception;
 
+    /** 通过交易日期获取那天的分析结果 */
+    @RequestMapping(value = "getAnalysisResult", method = RequestMethod.GET)
+    Result<AnalyzeEntity> getAnalysisResultWithTradeDate(String tradeDate) throws Exception;
+
+    /** 获取最近二十天分析结果 */
+    @RequestMapping(value = "getLastTwentyDaysResult", method = RequestMethod.GET)
+    Result<List<AnalyzeEntity>> getLastTwentyDaysAnalysisResultWithTradeDate(String tradeDate) throws Exception;
+
     /** 分析某一天的数据并且记录到redis */
     @RequestMapping(value = "analyzeStockDataWithTradeData", method = RequestMethod.GET)
     Result<AnalyzeEntity> analyzeStockDataWithTradeData(String tradeDate) throws Exception;
 
     @RequestMapping(value = "test", method = RequestMethod.GET)
     String test() throws Exception;
+
+    @RequestMapping(value = "test2", method = RequestMethod.GET)
+    String test2() throws Exception;
 }
