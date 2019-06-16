@@ -34,6 +34,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String INDEX_DAILY = "index_daily";
     private static final String NEWS = "news";
     private static final String STK_HOLDER_TRADE = "stk_holdertrade";
+    private static final String MONEY_FLOW_HSGT = "moneyflow_hsgt";
     private static final String TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
 
     @Autowired
@@ -241,6 +242,42 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         }
 
         return holdingSharesEntities;
+    }
+
+    @Override
+    public MoneyFlowEntity requestMoneyFlowWithTradeDate(Date tradeDate) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
+
+        JSONObject result = request(MONEY_FLOW_HSGT, params);
+        List<MoneyFlowEntity> moneyFlowEntities = new ArrayList<>();
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            MoneyFlowEntity moneyFlowEntity = new MoneyFlowEntity();
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+                            moneyFlowEntity.setGgtSs(stockData.getFloat(1));
+                            moneyFlowEntity.setGgtSz(stockData.getFloat(2));
+                            moneyFlowEntity.setHgt(stockData.getFloat(3));
+                            moneyFlowEntity.setSgt(stockData.getFloat(4));
+                            moneyFlowEntity.setNorthMoney(stockData.getFloat(5));
+                            moneyFlowEntity.setSouthMoney(stockData.getFloat(6));
+                            moneyFlowEntities.add(moneyFlowEntity);
+                        }
+                );
+            }
+        }
+
+        if (moneyFlowEntities.size() > 0) {
+            return moneyFlowEntities.get(0);
+        } else {
+            return null;
+        }
+
     }
 
     @Override

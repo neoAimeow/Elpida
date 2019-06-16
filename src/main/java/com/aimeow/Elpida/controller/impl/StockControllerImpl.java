@@ -149,6 +149,12 @@ public class StockControllerImpl implements StockController {
     }
 
     @Override
+    public Result<MoneyFlowEntity> getMoneyFlowWithTradeDate(String tradeDate) throws Exception {
+        return ResultUtil.buildSuccessResult(new Result<>(), stockRequestWrapper.requestMoneyFlowWithTradeDate(
+                DateUtil.formatStringToDate(tradeDate, "yyyyMMdd")));
+    }
+
+    @Override
     public Result<AnalyzeEntity> analyzeStockDataWithTradeData(@NonNull String tradeDate) throws Exception {
         List<DailyStockEntity> stockEntityList = getDailyStockWithTradeDate(tradeDate).getModel();
         List<StockBasicEntity> stockBasicEntityList = getBasicStockDataWithTradeDate(tradeDate).getModel();

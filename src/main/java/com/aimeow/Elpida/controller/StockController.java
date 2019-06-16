@@ -31,16 +31,24 @@ public interface StockController {
     @RequestMapping(value = "getIndexStockData", method = RequestMethod.GET)
     Result<List<DailyStockEntity>> getIndexStockDataWithTradeDate(String tradeDate) throws Exception;
 
+    /** 获得某一天的新闻 */
     @RequestMapping(value = "getNews", method = RequestMethod.GET)
     Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception;
 
+    /** 获得股东增减持 */
     @RequestMapping(value = "getHoldingSharesChange", method = RequestMethod.GET)
     Result<List<HoldingSharesEntity>> getHoldingShareChangeWithTradeDate(String tradeDate) throws Exception;
 
+    /** 获得股票列表 */
     @RequestMapping(value = "/getStockListWithStatus", method = RequestMethod.GET)
     /**  L上市 D退市 P暂停上市 */
     Result<List<StockListEntity>> getUpdateStockListWithStatus(String status) throws Exception;
 
+    /** 获得沪深港通资金流向 */
+    @RequestMapping(value = "getMoneyFlow", method = RequestMethod.GET)
+    Result<MoneyFlowEntity> getMoneyFlowWithTradeDate(String tradeDate) throws Exception;
+
+    /** 分析某一天的数据并且记录到redis */
     @RequestMapping(value = "analyzeStockDataWithTradeData", method = RequestMethod.GET)
     Result<AnalyzeEntity> analyzeStockDataWithTradeData(String tradeDate) throws Exception;
 

@@ -26,7 +26,11 @@ public interface StockRequestWrapper {
     /** 通过开始时间与结束时间来获取新闻，src包含sina、wallstreetcn、10jqka、eastmoney、yuncaijing */
     List<NewsEntity> requestNewsWithDate(Date startDate, Date endDate, String src) throws Exception;
 
+    /** 增减持 */
     List<HoldingSharesEntity> requestHoldingSharesChangeWithTradeDate(Date tradeDate) throws Exception;
+
+    /** 获取沪深港通资金流向 */
+    MoneyFlowEntity requestMoneyFlowWithTradeDate(Date tradeDate) throws Exception;
 
     /** 获取各大交易所交易日历数据,默认提取的是上交所 */
     List<TradeCalendarEntity> requestTradeCalendar(Date startDate, Date endDate) throws Exception;
