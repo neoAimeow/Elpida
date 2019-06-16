@@ -166,7 +166,7 @@ public class StockControllerImpl implements StockController {
     public Result<List<AnalyzeEntity>> getLastTwentyDaysAnalysisResultWithTradeDate(String tradeDate) throws Exception {
         Date dateAfter = DateUtil.formatStringToDate(tradeDate, "yyyyMMdd");
         String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
-        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -7);
+        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -20);
         Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
 
         List<AnalyzeEntity> analyzeEntities = new ArrayList<>();
@@ -276,8 +276,19 @@ public class StockControllerImpl implements StockController {
         analyzeEntity.setUpAmount(upList.size());
         analyzeEntity.setDownAmount(downList.size());
 
+
+//        //分析连板数
+        List<AnalyzeEntity> lastTwentyDaysAnalyze = getLastTwentyDaysAnalysisResultWithTradeDate(tradeDate).getModel();
+        if (lastTwentyDaysAnalyze.size() > 0 && DateUtil.formatDateToString(
+                lastTwentyDaysAnalyze.get(0).getTradeDate(),"yyyyMMdd").equals(tradeDate)) {
+            lastTwentyDaysAnalyze.remove(0);
+        }
+        Map<String, List<SimpleStockEntity>> map = analyzeContinuousStocksWithAnalyzeEntities(analyzeEntity, lastTwentyDaysAnalyze);
+        analyzeEntity.setContinuousLimitUpStocks(map);
+
         Result<AnalyzeEntity> analyzeEntityResult = ResultUtil.buildSuccessResult(new Result<>(),analyzeEntity);
         redisUtil.set(ANALYZE_STOCK_PRE + tradeDate, JSONObject.toJSONString(analyzeEntityResult, SerializerFeature.DisableCircularReferenceDetect));
+
         return analyzeEntityResult;
     }
 
@@ -285,20 +296,20 @@ public class StockControllerImpl implements StockController {
 //
 //    }
 
-    private Map<String, List<SimpleStockEntity>> analyzeContinuousStocksWithAnalyzeEntities(List<AnalyzeEntity> analyzeEntities) {
-        Map<SimpleStockEntity, String> simpleStockEntityIntegerMap = new HashMap<>();
-
+    private Map<String, List<SimpleStockEntity>> analyzeContinuousStocksWithAnalyzeEntities(
+            @NonNull AnalyzeEntity todayAnalyze, @NonNull List<AnalyzeEntity> analyzeEntities) {
+        Map<SimpleStockEntity, JSONObject> simpleStockEntityIntegerMap = new HashMap<>();
 
         //初始化生成map
-        if (analyzeEntities.size() > 0) {
-            List<FullStockEntity> fullStockEntities = analyzeEntities.get(0).getLimitUpStocks();
-            for (FullStockEntity fullStockEntity : fullStockEntities) {
-                SimpleStockEntity simpleStockEntity = new SimpleStockEntity();
-                simpleStockEntity.setStockCode(fullStockEntity.getStockCode());
-                simpleStockEntity.setStockName(fullStockEntity.getStockName());
-                simpleStockEntity.setFlag(false);
-                simpleStockEntityIntegerMap.put(simpleStockEntity, "0");
-            }
+        List<FullStockEntity> fullStockEntities = todayAnalyze.getLimitUpStocks();
+        for (FullStockEntity fullStockEntity : fullStockEntities) {
+            SimpleStockEntity simpleStockEntity = new SimpleStockEntity();
+            simpleStockEntity.setStockCode(fullStockEntity.getStockCode());
+            simpleStockEntity.setStockName(fullStockEntity.getStockName());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("count", 1);
+            jsonObject.put("flag", 0);
+            simpleStockEntityIntegerMap.put(simpleStockEntity, jsonObject);
         }
 
         for (AnalyzeEntity analyzeEntity : analyzeEntities) {
@@ -306,29 +317,42 @@ public class StockControllerImpl implements StockController {
             for (FullStockEntity fullStockEntity : limitUpList) {
 
                 SimpleStockEntity target = null;
-                for (Map.Entry<SimpleStockEntity, String> entry : simpleStockEntityIntegerMap.entrySet()) {
+                for (Map.Entry<SimpleStockEntity, JSONObject> entry : simpleStockEntityIntegerMap.entrySet()) {
                     SimpleStockEntity simpleStockEntity = entry.getKey();
                     if (simpleStockEntity.getStockCode().equals(fullStockEntity.getStockCode())) {
                         target = simpleStockEntity;
                     }
                 }
+                JSONObject object = simpleStockEntityIntegerMap.get(target);
 
-                if (target != null) {
-                    simpleStockEntityIntegerMap.put(target, Integer.toString(Integer.valueOf(simpleStockEntityIntegerMap.get(target)) + 1));
+                if (target != null && (object.getInteger("flag") == 0 || object.getInteger("flag") == 1)) {
+                    object.put("count", object.getInteger("count") + 1);
+                    object.put("flag", 1);
+                    simpleStockEntityIntegerMap.put(target, object);
                 }
+            }
+
+            for (Map.Entry<SimpleStockEntity, JSONObject> entry : simpleStockEntityIntegerMap.entrySet()) {
+                JSONObject tempObj = entry.getValue();
+                if (tempObj.getInteger("flag") == 0) {
+                    tempObj.put("flag", 2);
+                } else if (tempObj.getInteger("flag") == 1) {
+                    tempObj.put("flag", 0);
+                }
+                simpleStockEntityIntegerMap.put(entry.getKey(), tempObj);
             }
         }
 
         Map<String, List<SimpleStockEntity>> myNewHashMap = new HashMap<>();
 
-        for(Map.Entry<SimpleStockEntity, String> entry : simpleStockEntityIntegerMap.entrySet()) {
-            if (myNewHashMap.get(entry.getValue()) == null) {
+        for(Map.Entry<SimpleStockEntity, JSONObject> entry : simpleStockEntityIntegerMap.entrySet()) {
+            if (myNewHashMap.get(entry.getValue().getString("count")) == null) {
                 List<SimpleStockEntity> simpleStockEntities = new ArrayList<>();
-                myNewHashMap.put(entry.getValue(), simpleStockEntities);
+                myNewHashMap.put(entry.getValue().getString("count"), simpleStockEntities);
             }
-            List<SimpleStockEntity> simpleStockEntities = myNewHashMap.get(entry.getValue());
+            List<SimpleStockEntity> simpleStockEntities = myNewHashMap.get(entry.getValue().getString("count"));
             simpleStockEntities.add(entry.getKey());
-            myNewHashMap.put(entry.getValue(), simpleStockEntities);
+            myNewHashMap.put(entry.getValue().getString("count"), simpleStockEntities);
         }
 
         return myNewHashMap;
@@ -377,9 +401,9 @@ public class StockControllerImpl implements StockController {
         return "success";
     }
 
-    @Override
-    public String test2() throws Exception {
-        List<AnalyzeEntity> analyzeEntities = getLastTwentyDaysAnalysisResultWithTradeDate("20190614").getModel();
-        return JSON.toJSONString(analyzeContinuousStocksWithAnalyzeEntities(analyzeEntities));
-    }
+//    @Override
+//    public String test2() throws Exception {
+//        List<AnalyzeEntity> analyzeEntities = getLastTwentyDaysAnalysisResultWithTradeDate("20190614").getModel();
+//        return JSON.toJSONString(analyzeContinuousStocksWithAnalyzeEntities(analyzeEntities));
+//    }
 }

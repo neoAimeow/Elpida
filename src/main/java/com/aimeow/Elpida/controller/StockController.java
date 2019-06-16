@@ -63,6 +63,6 @@ public interface StockController {
     @RequestMapping(value = "test", method = RequestMethod.GET)
     String test() throws Exception;
 
-    @RequestMapping(value = "test2", method = RequestMethod.GET)
-    String test2() throws Exception;
+//    @RequestMapping(value = "test2", method = RequestMethod.GET)
+//    String test2() throws Exception;
 }

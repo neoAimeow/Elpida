@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class AnalyzeEntity {
@@ -41,5 +42,8 @@ public class AnalyzeEntity {
     private List<DailyStockEntity> indexStocks;
     /** 增减持信息 */
     private List<HoldingSharesEntity> holdingSharesList;
+
+    /** 连板数 */
+    private Map<String, List<SimpleStockEntity>> continuousLimitUpStocks;
 
 }
