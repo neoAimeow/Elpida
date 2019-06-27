@@ -73,12 +73,11 @@ public class StockControllerImpl implements StockController {
         List<String> indexList = new ArrayList<>();
         indexList.add("000001.SH");
         indexList.add("399001.SZ");
-        indexList.add("399006.SZ");
         indexList.add("399005.SZ");
-
+        indexList.add("399006.SZ");
         List<DailyStockEntity> dailyStockEntities = new ArrayList<>();
 
-        indexList.parallelStream().forEach(
+        indexList.stream().forEach(
                 obj -> {
                     try {
                         dailyStockEntities.add(stockRequestWrapper.requestIndexStockInfoWithCodeAndTradeDate(
