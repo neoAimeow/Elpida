@@ -83,6 +83,12 @@
 			<artifactId>httpclient</artifactId>
 			<version>${httpclient.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/no.laukvik/csv -->
+		<dependency>
+			<groupId>no.laukvik</groupId>
+			<artifactId>csv</artifactId>
+			<version>0.9.3</version>
+		</dependency>
 
 	</dependencies>
 

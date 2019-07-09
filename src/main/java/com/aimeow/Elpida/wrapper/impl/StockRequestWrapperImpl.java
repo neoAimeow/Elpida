@@ -1,6 +1,12 @@
 package com.aimeow.Elpida.wrapper.impl;
 
 import com.aimeow.Elpida.entity.*;
+import com.aimeow.Elpida.entity.joinQuant.JoinQuantSecurityEntity;
+import com.aimeow.Elpida.entity.joinQuant.JoinQuantStockEntity;
+import com.aimeow.Elpida.entity.tushare.TuDailyStockEntity;
+import com.aimeow.Elpida.entity.tushare.TuStockBasicEntity;
+import com.aimeow.Elpida.entity.tushare.TuStockListEntity;
+import com.aimeow.Elpida.tools.CsvUtil;
 import com.aimeow.Elpida.tools.DateUtil;
 import com.aimeow.Elpida.tools.RedisUtil;
 import com.aimeow.Elpida.wrapper.StockRequestWrapper;
@@ -18,36 +24,45 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
+import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_FULL;
 
 @Component
 public class StockRequestWrapperImpl implements StockRequestWrapper {
 
-    private static final String API_URI = "http://api.waditu.com";
-    private static final String STOCK_LIST = "stock_basic";
-    private static final String DAILY_STOCK = "daily";
-    private static final String BASIC_STOCK_INFO = "daily_basic";
-    private static final String TRADE_CALENDAR = "trade_cal";
-    private static final String INDEX_DAILY = "index_daily";
-    private static final String NEWS = "news";
-    private static final String STK_HOLDER_TRADE = "stk_holdertrade";
-    private static final String MONEY_FLOW_HSGT = "moneyflow_hsgt";
-    private static final String TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
+    private static final String TU_API_URI = "http://api.waditu.com";
+    private static final String TU_STOCK_LIST = "stock_basic";
+    private static final String TU_DAILY_STOCK = "daily";
+    private static final String TU_BASIC_STOCK_INFO = "daily_basic";
+    private static final String TU_TRADE_CALENDAR = "trade_cal";
+    private static final String TU_INDEX_DAILY = "index_daily";
+    private static final String TU_NEWS = "news";
+    private static final String TU_STK_HOLDER_TRADE = "stk_holdertrade";
+    private static final String TU_MONEY_FLOW_HSGT = "moneyflow_hsgt";
+    private static final String TU_TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
+
+    private static final String JOINQUANT_MOBILE = "18814888787";
+    private static final String JOINQUANT_PASSWORD = "pKtWa4kZs3A@@!>\\q2zZ";
+    private static final String JOINQUANT_TOKEN_PRE = "JOINQUANT_TOKEN";
+    private static final String JOINQUANT_API_URI = "https://dataapi.joinquant.com/apis";
+    private static final String JOINQUANT_ALL_SECURITIES_PRE = "JOINQUANT_ALL_SECURITIES_";
 
     @Autowired
     private RedisUtil redisUtil;
+    @Autowired
+    private CsvUtil csvUtil;
 
     @Override
-    public List<DailyStockEntity> requestDailyStockInfoWithTradeDate(@NonNull Date tradeDate) throws Exception {
+    public List<TuDailyStockEntity> tuRequestDailyStockInfoWithTradeDate(@NonNull Date tradeDate) throws Exception {
         JSONObject params = new JSONObject();
         params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
 
-        JSONObject result = request(DAILY_STOCK, params);
+        JSONObject result = tuRequest(TU_DAILY_STOCK, params);
         //parse JSONObject to Entity;
-        List<DailyStockEntity> dailyStockEntities = new ArrayList<>();
+        List<TuDailyStockEntity> dailyStockEntities = new ArrayList<>();
 
         JSONObject data = result.getJSONObject("data");
         if (data != null) {
@@ -56,20 +71,20 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                 array.stream().forEach(
                         obj -> {
                             JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
-                            DailyStockEntity dailyStockEntity = new DailyStockEntity();
-                            dailyStockEntity.setStockCode(stockData.getString(0));
-                            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                            TuDailyStockEntity tuDailyStockEntity = new TuDailyStockEntity();
+                            tuDailyStockEntity.setStockCode(stockData.getString(0));
+                            tuDailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
                                     stockData.getString(1), "yyyyMMdd"));
-                            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
-                            dailyStockEntity.setHighPrice(stockData.getFloat(3));
-                            dailyStockEntity.setLowPrice(stockData.getFloat(4));
-                            dailyStockEntity.setClosePrice(stockData.getFloat(5));
-                            dailyStockEntity.setPrePrice(stockData.getFloat(6));
-                            dailyStockEntity.setChangePrice(stockData.getFloat(7));
-                            dailyStockEntity.setChangeRate(stockData.getFloat(8));
-                            dailyStockEntity.setVolume(stockData.getFloat(9));
-                            dailyStockEntity.setAmount(stockData.getFloat(10));
-                            dailyStockEntities.add(dailyStockEntity);
+                            tuDailyStockEntity.setOpenPrice(stockData.getFloat(2));
+                            tuDailyStockEntity.setHighPrice(stockData.getFloat(3));
+                            tuDailyStockEntity.setLowPrice(stockData.getFloat(4));
+                            tuDailyStockEntity.setClosePrice(stockData.getFloat(5));
+                            tuDailyStockEntity.setPrePrice(stockData.getFloat(6));
+                            tuDailyStockEntity.setChangePrice(stockData.getFloat(7));
+                            tuDailyStockEntity.setChangeRate(stockData.getFloat(8));
+                            tuDailyStockEntity.setVolume(stockData.getFloat(9));
+                            tuDailyStockEntity.setAmount(stockData.getFloat(10));
+                            dailyStockEntities.add(tuDailyStockEntity);
                         }
                 );
             }
@@ -80,12 +95,12 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<StockBasicEntity> requestBasicStockInfoWithTradeDate(Date tradeDate) throws Exception {
+    public List<TuStockBasicEntity> tuRequestBasicStockInfoWithTradeDate(Date tradeDate) throws Exception {
         JSONObject params = new JSONObject();
         params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
 
-        JSONObject result = request(BASIC_STOCK_INFO, params);
-        List<StockBasicEntity> stockBasicEntities = new ArrayList<>();
+        JSONObject result = tuRequest(TU_BASIC_STOCK_INFO, params);
+        List<TuStockBasicEntity> stockBasicEntities = new ArrayList<>();
 
         JSONObject data = result.getJSONObject("data");
         if (data != null) {
@@ -94,23 +109,23 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                 array.stream().forEach(
                         obj -> {
                             JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
-                            StockBasicEntity stockBasicEntity = new StockBasicEntity();
-                            stockBasicEntity.setStockCode(stockData.getString(0));
-                            stockBasicEntity.setTradeDate(DateUtil.formatStringToDate(
+                            TuStockBasicEntity tuStockBasicEntity = new TuStockBasicEntity();
+                            tuStockBasicEntity.setStockCode(stockData.getString(0));
+                            tuStockBasicEntity.setTradeDate(DateUtil.formatStringToDate(
                                     stockData.getString(1), "yyyyMMdd"));
-                            stockBasicEntity.setTurnOverRate(stockData.getFloat(3));
-                            stockBasicEntity.setTurnOverRateF(stockData.getFloat(4));
-                            stockBasicEntity.setVolumeRatio(stockData.getFloat(5));
-                            stockBasicEntity.setPe(stockData.getFloat(6));
-                            stockBasicEntity.setPb(stockData.getFloat(8));
-                            stockBasicEntity.setPs(stockData.getFloat(9));
-                            stockBasicEntity.setTotalShare(stockData.getFloat(11));
-                            stockBasicEntity.setFloatShare(stockData.getFloat(12));
-                            stockBasicEntity.setFreeShare(stockData.getFloat(13));
-                            stockBasicEntity.setTotalMv(stockData.getFloat(14));
-                            stockBasicEntity.setCircMv(stockData.getFloat(15));
+                            tuStockBasicEntity.setTurnOverRate(stockData.getFloat(3));
+                            tuStockBasicEntity.setTurnOverRateF(stockData.getFloat(4));
+                            tuStockBasicEntity.setVolumeRatio(stockData.getFloat(5));
+                            tuStockBasicEntity.setPe(stockData.getFloat(6));
+                            tuStockBasicEntity.setPb(stockData.getFloat(8));
+                            tuStockBasicEntity.setPs(stockData.getFloat(9));
+                            tuStockBasicEntity.setTotalShare(stockData.getFloat(11));
+                            tuStockBasicEntity.setFloatShare(stockData.getFloat(12));
+                            tuStockBasicEntity.setFreeShare(stockData.getFloat(13));
+                            tuStockBasicEntity.setTotalMv(stockData.getFloat(14));
+                            tuStockBasicEntity.setCircMv(stockData.getFloat(15));
 
-                            stockBasicEntities.add(stockBasicEntity);
+                            stockBasicEntities.add(tuStockBasicEntity);
                         }
                 );
             }
@@ -121,13 +136,13 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public DailyStockEntity requestIndexStockInfoWithCodeAndTradeDate(String tsCode, Date tradeDate) throws Exception {
+    public TuDailyStockEntity tuRequestIndexStockInfoWithCodeAndTradeDate(String tsCode, Date tradeDate) throws Exception {
         JSONObject params = new JSONObject();
         params.put("ts_code", tsCode);
         params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
 
-        JSONObject result = request(INDEX_DAILY, params);
-        DailyStockEntity dailyStockEntity = new DailyStockEntity();
+        JSONObject result = tuRequest(TU_INDEX_DAILY, params);
+        TuDailyStockEntity tuDailyStockEntity = new TuDailyStockEntity();
 
 
         JSONObject data = result.getJSONObject("data");
@@ -137,29 +152,29 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                 array.stream().forEach(
                         obj -> {
                             JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
-                            dailyStockEntity.setStockCode(stockData.getString(0));
-                            dailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                            tuDailyStockEntity.setStockCode(stockData.getString(0));
+                            tuDailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
                                     stockData.getString(1), "yyyyMMdd"));
-                            dailyStockEntity.setOpenPrice(stockData.getFloat(2));
-                            dailyStockEntity.setHighPrice(stockData.getFloat(3));
-                            dailyStockEntity.setLowPrice(stockData.getFloat(4));
-                            dailyStockEntity.setClosePrice(stockData.getFloat(5));
-                            dailyStockEntity.setPrePrice(stockData.getFloat(6));
-                            dailyStockEntity.setChangePrice(stockData.getFloat(7));
-                            dailyStockEntity.setChangeRate(stockData.getFloat(8));
-                            dailyStockEntity.setVolume(stockData.getFloat(9));
-                            dailyStockEntity.setAmount(stockData.getFloat(10));
+                            tuDailyStockEntity.setOpenPrice(stockData.getFloat(2));
+                            tuDailyStockEntity.setHighPrice(stockData.getFloat(3));
+                            tuDailyStockEntity.setLowPrice(stockData.getFloat(4));
+                            tuDailyStockEntity.setClosePrice(stockData.getFloat(5));
+                            tuDailyStockEntity.setPrePrice(stockData.getFloat(6));
+                            tuDailyStockEntity.setChangePrice(stockData.getFloat(7));
+                            tuDailyStockEntity.setChangeRate(stockData.getFloat(8));
+                            tuDailyStockEntity.setVolume(stockData.getFloat(9));
+                            tuDailyStockEntity.setAmount(stockData.getFloat(10));
                         }
                 );
             }
         }
 
 
-        return dailyStockEntity;
+        return tuDailyStockEntity;
     }
 
     @Override
-    public List<NewsEntity> requestNewsWithDate(Date startDate, Date endDate, String src) throws Exception {
+    public List<NewsEntity> tuRequestNewsWithDate(Date startDate, Date endDate, String src) throws Exception {
         JSONObject params = new JSONObject();
         params.put("start_date", DateUtil.formatDateToString(startDate, "yyyyMMdd"));
         params.put("end_date", DateUtil.formatDateToString(endDate, "yyyyMMdd"));
@@ -167,7 +182,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
 
         List<NewsEntity> newsEntities = new ArrayList<>();
 
-        JSONObject result = request(NEWS, params);
+        JSONObject result = tuRequest(TU_NEWS, params);
         JSONObject data = result.getJSONObject("data");
         if (data != null) {
             JSONArray array = data.getJSONArray("items");
@@ -191,11 +206,11 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<HoldingSharesEntity> requestHoldingSharesChangeWithTradeDate(Date tradeDate) throws Exception {
+    public List<HoldingSharesEntity> tuRequestHoldingSharesChangeWithTradeDate(Date tradeDate) throws Exception {
         JSONObject params = new JSONObject();
         params.put("ann_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
         List<HoldingSharesEntity> holdingSharesEntities = new ArrayList<>();
-        JSONObject result = request(STK_HOLDER_TRADE, params);
+        JSONObject result = tuRequest(TU_STK_HOLDER_TRADE, params);
 
         JSONObject data = result.getJSONObject("data");
         if (data != null) {
@@ -231,11 +246,11 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
             }
         }
 
-        List<StockListEntity> stockListEntityList = requestStockList("L");
+        List<TuStockListEntity> tuStockListEntityList = tuRequestStockList("L");
         for (HoldingSharesEntity holdingSharesEntity : holdingSharesEntities) {
-            for (StockListEntity stockListEntity : stockListEntityList) {
-                if (stockListEntity.getStockCode().equals(holdingSharesEntity.getStockCode())) {
-                    holdingSharesEntity.setStockName(stockListEntity.getStockName());
+            for (TuStockListEntity tuStockListEntity : tuStockListEntityList) {
+                if (tuStockListEntity.getStockCode().equals(holdingSharesEntity.getStockCode())) {
+                    holdingSharesEntity.setStockName(tuStockListEntity.getStockName());
                 }
                 continue;
             }
@@ -245,11 +260,11 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public MoneyFlowEntity requestMoneyFlowWithTradeDate(Date tradeDate) throws Exception {
+    public MoneyFlowEntity tuRequestMoneyFlowWithTradeDate(Date tradeDate) throws Exception {
         JSONObject params = new JSONObject();
         params.put("trade_date", DateUtil.formatDateToString(tradeDate, "yyyyMMdd"));
 
-        JSONObject result = request(MONEY_FLOW_HSGT, params);
+        JSONObject result = tuRequest(TU_MONEY_FLOW_HSGT, params);
         List<MoneyFlowEntity> moneyFlowEntities = new ArrayList<>();
 
         JSONObject data = result.getJSONObject("data");
@@ -281,12 +296,12 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<StockListEntity> requestStockList(@NonNull String status) throws Exception {
+    public List<TuStockListEntity> tuRequestStockList(@NonNull String status) throws Exception {
         JSONObject params = new JSONObject();
         params.put("list_status", status);
-        JSONObject result = request(STOCK_LIST, params);
+        JSONObject result = tuRequest(TU_STOCK_LIST, params);
 
-        List<StockListEntity> stockListEntities = new ArrayList<>();
+        List<TuStockListEntity> stockListEntities = new ArrayList<>();
 
         JSONObject data = result.getJSONObject("data");
         if (data != null) {
@@ -295,12 +310,12 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                 array.stream().forEach(
                         obj -> {
                             JSONArray stockData = JSONArray.parseArray(obj.toString());
-                            StockListEntity stockListEntity = new StockListEntity();
-                            stockListEntity.setStockCode(stockData.getString(0));
-                            stockListEntity.setStockName(stockData.getString(2));
-                            stockListEntity.setIndustry(stockData.getString(4));
-                            stockListEntity.setMarket(stockData.getString(5));
-                            stockListEntities.add(stockListEntity);
+                            TuStockListEntity tuStockListEntity = new TuStockListEntity();
+                            tuStockListEntity.setStockCode(stockData.getString(0));
+                            tuStockListEntity.setStockName(stockData.getString(2));
+                            tuStockListEntity.setIndustry(stockData.getString(4));
+                            tuStockListEntity.setMarket(stockData.getString(5));
+                            stockListEntities.add(tuStockListEntity);
                         }
                 );
             }
@@ -310,7 +325,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<TradeCalendarEntity> requestTradeCalendar(@NonNull Date startDate, @NonNull Date endDate) throws Exception {
+    public List<TradeCalendarEntity> tuRequestTradeCalendar(@NonNull Date startDate, @NonNull Date endDate) throws Exception {
         String startDateStr = DateUtil.formatDateToString(startDate, "yyyyMMdd");
         String endDateStr = DateUtil.formatDateToString(endDate, "yyyyMMdd");
 
@@ -318,7 +333,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         params.put("start_date", startDateStr);
         params.put("end_date", endDateStr);
 
-        JSONObject result = request(TRADE_CALENDAR, params);
+        JSONObject result = tuRequest(TU_TRADE_CALENDAR, params);
         List<TradeCalendarEntity> tradeCalendarEntities = new ArrayList<>();
 
         JSONObject data = result.getJSONObject("data");
@@ -340,17 +355,108 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         return tradeCalendarEntities;
     }
 
-    private JSONObject request(String apiName , JSONObject params) throws Exception {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(API_URI);
-        httpPost.setHeader("Content-type", "application/json");
 
+    @Override
+    public List<JoinQuantSecurityEntity> joinQuantGetAllSecurities(String type) throws Exception {
+
+        String str = redisUtil.get(JOINQUANT_ALL_SECURITIES_PRE + type);
+        if (null == str) {
+            JSONObject object = new JSONObject();
+            object.put("code", type);
+            object.put("date", DateUtil.formatDateToString(new Date(), "yyyy-MM-dd"));
+            str = joinQuantRequest("get_all_securities", object);
+
+            redisUtil.setEx(JOINQUANT_ALL_SECURITIES_PRE + type, csvUtil.getJSON(str, ","), 3, TimeUnit.DAYS);
+        }
+
+        List<JoinQuantSecurityEntity> joinQuantSecurityEntities = new ArrayList<>();
+
+        JSONArray jsonArray = JSONArray.parseArray(str);
+        if (jsonArray != null) {
+            jsonArray.stream().forEach(
+                    obj -> {
+                        JSONObject data = JSONObject.parseObject(JSONObject.toJSONString(obj));
+                        JoinQuantSecurityEntity joinQuantSecurityEntity = new JoinQuantSecurityEntity();
+                        joinQuantSecurityEntity.setStockCode(data.getString("code"));
+                        joinQuantSecurityEntity.setDisplayName(data.getString("display_name"));
+                        joinQuantSecurityEntity.setType(data.getString("type"));
+                        joinQuantSecurityEntity.setStartDate(DateUtil.formatStringToDate(data.getString("start_date"), "yyyy-MM-dd"));
+                        joinQuantSecurityEntity.setEndDate(DateUtil.formatStringToDate(data.getString("end_date"), "yyyy-MM-dd"));
+                        joinQuantSecurityEntities.add(joinQuantSecurityEntity);
+                    }
+            );
+        }
+
+
+        return joinQuantSecurityEntities;
+    }
+
+    @Override
+    public List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantStockEntity stockEntity, Date tradeDate, String unit) throws Exception {
+        JSONObject object = new JSONObject();
+        object.put("code", stockEntity.getStockCode());
+        object.put("date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
+        object.put("end_date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
+        object.put("unit", unit);
+        String str = joinQuantRequest("get_price_period", object);
+        System.out.println(csvUtil.getJSON(str, ","));
+        return null;
+    }
+
+    @Override
+    public Long joinQuantGetQueryCount() throws Exception {
+        return Long.valueOf(joinQuantRequest("get_query_count", new JSONObject()));
+    }
+
+    @Override
+    public String joinQuantRequestToken() throws Exception {
+        JSONObject rawObject = new JSONObject();
+        rawObject.put("method", "get_current_token");
+        rawObject.put("mob", JOINQUANT_MOBILE);
+        rawObject.put("pwd", JOINQUANT_PASSWORD);
+
+        String content = request(JOINQUANT_API_URI, rawObject);
+        redisUtil.setEx(JOINQUANT_TOKEN_PRE, content, 8, TimeUnit.HOURS);
+        return content;
+    }
+
+    private JSONObject tuRequest(String apiName , JSONObject params) throws Exception {
         JSONObject rawObject = new JSONObject();
         rawObject.put("api_name", apiName);
-        rawObject.put("token", TOKEN);
+        rawObject.put("token", TU_TOKEN);
         rawObject.put("field", "");
         rawObject.put("params", params);
-        String raw = rawObject.toJSONString();
+        String content = request(TU_API_URI, rawObject);
+        return JSONObject.parseObject(content);
+    }
+
+    private String joinQuantRequest(String apiName , JSONObject params) throws Exception {
+        String token = redisUtil.get(JOINQUANT_TOKEN_PRE);
+
+        if (null == token) {
+            token = joinQuantRequestToken();
+        }
+
+        JSONObject rawObject = new JSONObject();
+        rawObject.put("method", apiName);
+        rawObject.put("token", token);
+        for (String key : params.keySet()) {
+            rawObject.put(key, params.getString(key));
+        }
+
+        String content = request(JOINQUANT_API_URI, rawObject);
+
+        System.out.println(content);
+
+        return content;
+    }
+
+    private String request(String apiUri, JSONObject param) throws Exception {
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(apiUri);
+        httpPost.setHeader("Content-type", "application/json");
+
+        String raw = param.toJSONString();
         httpPost.setEntity(new StringEntity(raw, ContentType.DEFAULT_TEXT));
 
         CloseableHttpResponse response = httpclient.execute(httpPost);
@@ -368,7 +474,6 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
             response.close();
         }
         httpclient.close();
-
-        return JSONObject.parseObject(content);
+        return content;
     }
 }

@@ -1,11 +1,11 @@
-package com.aimeow.Elpida.entity;
+package com.aimeow.Elpida.entity.tushare;
 
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
-public class DailyStockEntity {
+public class TuDailyStockEntity {
     /** 股票代码 */
     private String stockCode;
     /** 交易日期 */

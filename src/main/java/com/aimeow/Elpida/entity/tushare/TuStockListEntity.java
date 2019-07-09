@@ -1,9 +1,9 @@
-package com.aimeow.Elpida.entity;
+package com.aimeow.Elpida.entity.tushare;
 
 import lombok.Data;
 
 @Data
-public class StockListEntity {
+public class TuStockListEntity {
     /** 股票代码 */
     private String stockCode;
     /** 股票名字 */

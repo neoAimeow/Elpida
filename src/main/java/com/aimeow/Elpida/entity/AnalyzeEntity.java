@@ -1,5 +1,8 @@
 package com.aimeow.Elpida.entity;
 
+import com.aimeow.Elpida.entity.tushare.TuDailyStockEntity;
+import com.aimeow.Elpida.entity.tushare.TuFullStockEntity;
+import com.aimeow.Elpida.entity.tushare.TuSimpleStockEntity;
 import lombok.Data;
 
 import java.util.Date;
@@ -31,19 +34,19 @@ public class AnalyzeEntity {
     private MoneyFlowEntity moneyFlow;
 
     /** 涨停股 */
-    private List<FullStockEntity> limitUpStocks;
+    private List<TuFullStockEntity> limitUpStocks;
     /** 一字板股 */
-    private List<FullStockEntity> topStocks;
+    private List<TuFullStockEntity> topStocks;
     /** 跌停股 */
-    private List<FullStockEntity> limitDownStocks;
+    private List<TuFullStockEntity> limitDownStocks;
     /** 炸板股 */
-    private List<FullStockEntity> explodeStocks;
+    private List<TuFullStockEntity> explodeStocks;
     /** 指数 */
-    private List<DailyStockEntity> indexStocks;
+    private List<TuDailyStockEntity> indexStocks;
     /** 增减持信息 */
     private List<HoldingSharesEntity> holdingSharesList;
 
     /** 连板数 */
-    private Map<String, List<SimpleStockEntity>> continuousLimitUpStocks;
+    private Map<String, List<TuSimpleStockEntity>> continuousLimitUpStocks;
 
 }
