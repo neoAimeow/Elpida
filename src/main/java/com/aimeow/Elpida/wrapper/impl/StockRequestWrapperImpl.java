@@ -392,9 +392,9 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantStockEntity stockEntity, Date tradeDate, String unit) throws Exception {
+    public List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantSecurityEntity securityEntity, Date tradeDate, String unit) throws Exception {
         JSONObject object = new JSONObject();
-        object.put("code", stockEntity.getStockCode());
+        object.put("code", securityEntity.getStockCode());
         object.put("date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
         object.put("end_date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
         object.put("unit", unit);
@@ -445,6 +445,11 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         }
 
         String content = request(JOINQUANT_API_URI, rawObject);
+
+        if (content.contains("error: token过期，请重新获取")) {
+            joinQuantRequestToken();
+            content = request(JOINQUANT_API_URI, rawObject);
+        }
 
         System.out.println(content);
 

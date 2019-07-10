@@ -32,24 +32,40 @@ public class JoinQuantStockControllerImpl implements JoinQuantStockController {
 
     @Override
     public Result test3() throws Exception {
-        JoinQuantStockEntity joinQuantStockEntity = new JoinQuantStockEntity();
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "3");
 
-        List<JoinQuantSecurityEntity> joinQuantSecurityEntities = stockRequestWrapper.joinQuantGetAllSecurities("stock");
+        List<JoinQuantSecurityEntity> joinQuantSecurityEntities = stockRequestWrapper
+                .joinQuantGetAllSecurities("stock");
 
-        System.out.print(joinQuantSecurityEntities.size());
+        joinQuantSecurityEntities.parallelStream().forEach(
+                obj -> {
+                    try {
+                        stockRequestWrapper.joinQuantGetStock(obj,
+                                DateUtil.formatStringToDate("2019-07-09", "yyyy-MM-dd"), "1d");
+                    } catch (Exception ex) {
+
+                    }
+                }
+        );
+
 //        List<List<JoinQuantSecurityEntity>> splitArray = new ArrayList<>();
 //
+//        splitArray.add(new ArrayList<>());
+//        splitArray.add(new ArrayList<>());
+//        splitArray.add(new ArrayList<>());
 //
-//        joinQuantSecurityEntities.parallelStream().forEach(
-//                obj -> {
-//                    try {
-//                        stockRequestWrapper.joinQuantGetStock(joinQuantStockEntity,
-//                                DateUtil.formatStringToDate("2019-07-09", "yyyy-MM-dd"), "5m");
-//                    } catch (Exception ex) {
 //
-//                    }
-//                }
-//        );
+//
+//        for (int i = 0; i < joinQuantSecurityEntities.size(); i++ ) {
+//            List<JoinQuantSecurityEntity> temp = splitArray.get(i / 1000);
+//            temp.add(joinQuantSecurityEntities.get(i));
+//        }
+
+//        for (List<JoinQuantSecurityEntity> array : splitArray) {
+//
+//            Thread.sleep(10000);
+//        }
+
         return ResultUtil.buildSuccessResult(new Result<>(), null);
     }
 }
