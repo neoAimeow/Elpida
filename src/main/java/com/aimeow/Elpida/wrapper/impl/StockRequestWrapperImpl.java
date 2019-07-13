@@ -44,9 +44,19 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String TU_MONEY_FLOW_HSGT = "moneyflow_hsgt";
     private static final String TU_TOKEN = "2e70679ed6dcf7f5adf2747f8caa6721c27dc77c910c6954e4936229";
 
-    private static final String JOINQUANT_MOBILE = "18814888787";
-    private static final String JOINQUANT_PASSWORD = "pKtWa4kZs3A@@!>\\q2zZ";
-    private static final String JOINQUANT_TOKEN_PRE = "JOINQUANT_TOKEN";
+    private static final String JOINQUANT_ACCOUNT1_MOBILE = "18814888787";
+    private static final String JOINQUANT_ACCOUNT1_PASSWORD = "pKtWa4kZs3A@@!>\\q2zZ";
+
+    private static final String JOINQUANT_ACCOUNT2_MOBILE = "18814868787";
+    private static final String JOINQUANT_ACCOUNT2_PASSWORD = ">Gb5VL80q1,eg#iOBw";
+
+    private static final String JOINQUANT_ACCOUNT3_MOBILE = "18601643730";
+    private static final String JOINQUANT_ACCOUNT3_PASSWORD = "Fw6]i7W?]Whs8W-Snf";
+
+    private static final String JOINQUANT_ACCOUNT1_TOKEN_PRE = "JOINQUANT_ACCOUNT1_TOKEN";
+    private static final String JOINQUANT_ACCOUNT2_TOKEN_PRE = "JOINQUANT_ACCOUNT2_TOKEN";
+    private static final String JOINQUANT_ACCOUNT3_TOKEN_PRE = "JOINQUANT_ACCOUNT3_TOKEN";
+
     private static final String JOINQUANT_API_URI = "https://dataapi.joinquant.com/apis";
     private static final String JOINQUANT_ALL_SECURITIES_PRE = "JOINQUANT_ALL_SECURITIES_";
 
@@ -392,13 +402,13 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantSecurityEntity securityEntity, Date tradeDate, String unit) throws Exception {
+    public List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantSecurityEntity securityEntity, Date tradeDate, String unit, Integer accountCode) throws Exception {
         JSONObject object = new JSONObject();
         object.put("code", securityEntity.getStockCode());
         object.put("date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
         object.put("end_date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
         object.put("unit", unit);
-        String str = joinQuantRequest("get_price_period", object);
+        String str = joinQuantRequest("get_price_period", object, accountCode);
         System.out.println(csvUtil.getJSON(str, ","));
         return null;
     }
@@ -409,15 +419,29 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public String joinQuantRequestToken() throws Exception {
-        JSONObject rawObject = new JSONObject();
-        rawObject.put("method", "get_current_token");
-        rawObject.put("mob", JOINQUANT_MOBILE);
-        rawObject.put("pwd", JOINQUANT_PASSWORD);
+    public void joinQuantRequestToken() throws Exception {
+        JSONObject rawObject1 = new JSONObject();
+        rawObject1.put("method", "get_current_token");
+        rawObject1.put("mob", JOINQUANT_ACCOUNT1_MOBILE);
+        rawObject1.put("pwd", JOINQUANT_ACCOUNT1_PASSWORD);
 
-        String content = request(JOINQUANT_API_URI, rawObject);
-        redisUtil.setEx(JOINQUANT_TOKEN_PRE, content, 8, TimeUnit.HOURS);
-        return content;
+        JSONObject rawObject2 = new JSONObject();
+        rawObject2.put("method", "get_current_token");
+        rawObject2.put("mob", JOINQUANT_ACCOUNT2_MOBILE);
+        rawObject2.put("pwd", JOINQUANT_ACCOUNT2_PASSWORD);
+
+        JSONObject rawObject3 = new JSONObject();
+        rawObject3.put("method", "get_current_token");
+        rawObject3.put("mob", JOINQUANT_ACCOUNT3_MOBILE);
+        rawObject3.put("pwd", JOINQUANT_ACCOUNT3_PASSWORD);
+
+        String content1 = request(JOINQUANT_API_URI, rawObject1);
+        String content2 = request(JOINQUANT_API_URI, rawObject2);
+        String content3 = request(JOINQUANT_API_URI, rawObject3);
+
+        redisUtil.setEx(JOINQUANT_ACCOUNT1_TOKEN_PRE, content1, 23, TimeUnit.HOURS);
+        redisUtil.setEx(JOINQUANT_ACCOUNT2_TOKEN_PRE, content2, 23, TimeUnit.HOURS);
+        redisUtil.setEx(JOINQUANT_ACCOUNT3_TOKEN_PRE, content3, 23, TimeUnit.HOURS);
     }
 
     private JSONObject tuRequest(String apiName , JSONObject params) throws Exception {
@@ -430,11 +454,25 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         return JSONObject.parseObject(content);
     }
 
-    private String joinQuantRequest(String apiName , JSONObject params) throws Exception {
-        String token = redisUtil.get(JOINQUANT_TOKEN_PRE);
+    private String joinQuantRequest(String apiName, JSONObject params) throws Exception {
+        return joinQuantRequest(apiName, params, 1);
+    }
+
+    private String joinQuantRequest(String apiName , JSONObject params, Integer accountCode) throws Exception {
+        String account;
+        if (accountCode == 1) {
+            account = JOINQUANT_ACCOUNT1_TOKEN_PRE;
+        } else if (accountCode == 2) {
+            account = JOINQUANT_ACCOUNT2_TOKEN_PRE;
+        } else {
+            account = JOINQUANT_ACCOUNT3_TOKEN_PRE;
+        }
+
+        String token = redisUtil.get(account);
 
         if (null == token) {
-            token = joinQuantRequestToken();
+            joinQuantRequestToken();
+            token = redisUtil.get(account);
         }
 
         JSONObject rawObject = new JSONObject();

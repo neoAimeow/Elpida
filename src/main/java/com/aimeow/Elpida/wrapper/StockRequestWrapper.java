@@ -45,13 +45,13 @@ public interface StockRequestWrapper {
      * mixture_fund */
     List<JoinQuantSecurityEntity> joinQuantGetAllSecurities(String type) throws Exception;
 
-    List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantSecurityEntity securityEntity, Date tradeDate, String unit) throws Exception;
+    List<JoinQuantStockEntity> joinQuantGetStock(JoinQuantSecurityEntity securityEntity, Date tradeDate, String unit, Integer accountCode) throws Exception;
 
     /** 查询今天剩余调用数 */
     Long joinQuantGetQueryCount() throws Exception;
 
     /** joinQuant通过手机号和密码获取token */
-    String joinQuantRequestToken() throws Exception;
+    void joinQuantRequestToken() throws Exception;
 
 
 

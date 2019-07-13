@@ -22,6 +22,7 @@ public class JoinQuantStockControllerImpl implements JoinQuantStockController {
 
     @Override
     public Result test() throws Exception {
+        stockRequestWrapper.joinQuantRequestToken();
         return ResultUtil.buildSuccessResult(new Result<>(), stockRequestWrapper.joinQuantGetQueryCount());
     }
 
@@ -32,39 +33,37 @@ public class JoinQuantStockControllerImpl implements JoinQuantStockController {
 
     @Override
     public Result test3() throws Exception {
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "3");
+//        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "3");
 
         List<JoinQuantSecurityEntity> joinQuantSecurityEntities = stockRequestWrapper
                 .joinQuantGetAllSecurities("stock");
 
-        joinQuantSecurityEntities.parallelStream().forEach(
-                obj -> {
-                    try {
-                        stockRequestWrapper.joinQuantGetStock(obj,
-                                DateUtil.formatStringToDate("2019-07-09", "yyyy-MM-dd"), "1d");
-                    } catch (Exception ex) {
+        List<List<JoinQuantSecurityEntity>> splitArray = new ArrayList<>();
 
+        splitArray.add(new ArrayList<>());
+        splitArray.add(new ArrayList<>());
+        splitArray.add(new ArrayList<>());
+
+        for (int i = 0; i < joinQuantSecurityEntities.size(); i++ ) {
+            List<JoinQuantSecurityEntity> temp = splitArray.get(i / 1500);
+            temp.add(joinQuantSecurityEntities.get(i));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            List<JoinQuantSecurityEntity> array = splitArray.get(i);
+            System.out.println("joinQuantSecurityEntity size is " + array.size());
+            final Integer num = i;
+            array.parallelStream().forEach(
+                    obj -> {
+                        try {
+                            stockRequestWrapper.joinQuantGetStock(obj,
+                                    DateUtil.formatStringToDate("2019-07-09", "yyyy-MM-dd"), "1d", num);
+                        } catch (Exception ex) {
+
+                        }
                     }
-                }
-        );
-
-//        List<List<JoinQuantSecurityEntity>> splitArray = new ArrayList<>();
-//
-//        splitArray.add(new ArrayList<>());
-//        splitArray.add(new ArrayList<>());
-//        splitArray.add(new ArrayList<>());
-//
-//
-//
-//        for (int i = 0; i < joinQuantSecurityEntities.size(); i++ ) {
-//            List<JoinQuantSecurityEntity> temp = splitArray.get(i / 1000);
-//            temp.add(joinQuantSecurityEntities.get(i));
-//        }
-
-//        for (List<JoinQuantSecurityEntity> array : splitArray) {
-//
-//            Thread.sleep(10000);
-//        }
+            );
+        }
 
         return ResultUtil.buildSuccessResult(new Result<>(), null);
     }
