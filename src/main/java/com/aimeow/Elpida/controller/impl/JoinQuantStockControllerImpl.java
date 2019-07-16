@@ -20,6 +20,12 @@ public class JoinQuantStockControllerImpl implements JoinQuantStockController {
     @Autowired
     StockRequestWrapper stockRequestWrapper;
 
+
+    @Override
+    public Result<List<JoinQuantSecurityEntity>> joinQuantGetAllSecurities(String type) throws Exception {
+        return ResultUtil.buildSuccessResult(new Result<>(), stockRequestWrapper.joinQuantGetAllSecurities(type));
+    }
+
     @Override
     public Result test() throws Exception {
         stockRequestWrapper.joinQuantRequestToken();
@@ -38,32 +44,16 @@ public class JoinQuantStockControllerImpl implements JoinQuantStockController {
         List<JoinQuantSecurityEntity> joinQuantSecurityEntities = stockRequestWrapper
                 .joinQuantGetAllSecurities("stock");
 
-        List<List<JoinQuantSecurityEntity>> splitArray = new ArrayList<>();
+        joinQuantSecurityEntities.parallelStream().forEach(
+                obj -> {
+                    try {
+                        stockRequestWrapper.joinQuantGetStock(obj,
+                                DateUtil.formatStringToDate("2019-07-09", "yyyy-MM-dd"), "1d", obj.getNumber() / 1500);
+                    } catch (Exception ex) {
 
-        splitArray.add(new ArrayList<>());
-        splitArray.add(new ArrayList<>());
-        splitArray.add(new ArrayList<>());
-
-        for (int i = 0; i < joinQuantSecurityEntities.size(); i++ ) {
-            List<JoinQuantSecurityEntity> temp = splitArray.get(i / 1500);
-            temp.add(joinQuantSecurityEntities.get(i));
-        }
-
-        for (int i = 0; i < 3; i++) {
-            List<JoinQuantSecurityEntity> array = splitArray.get(i);
-            System.out.println("joinQuantSecurityEntity size is " + array.size());
-            final Integer num = i;
-            array.parallelStream().forEach(
-                    obj -> {
-                        try {
-                            stockRequestWrapper.joinQuantGetStock(obj,
-                                    DateUtil.formatStringToDate("2019-07-09", "yyyy-MM-dd"), "1d", num);
-                        } catch (Exception ex) {
-
-                        }
                     }
-            );
-        }
+                }
+        );
 
         return ResultUtil.buildSuccessResult(new Result<>(), null);
     }

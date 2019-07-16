@@ -6,6 +6,7 @@ import java.util.Date;
 
 @Data
 public class JoinQuantSecurityEntity {
+    private Integer number;
     private String stockCode;
     private String displayName;
     private String type;

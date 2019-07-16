@@ -48,7 +48,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String JOINQUANT_ACCOUNT1_PASSWORD = "pKtWa4kZs3A@@!>\\q2zZ";
 
     private static final String JOINQUANT_ACCOUNT2_MOBILE = "18814868787";
-    private static final String JOINQUANT_ACCOUNT2_PASSWORD = ">Gb5VL80q1,eg#iOBw";
+    private static final String JOINQUANT_ACCOUNT2_PASSWORD = "RD7Kkh3YdOiXPnTvhZ";
 
     private static final String JOINQUANT_ACCOUNT3_MOBILE = "18601643730";
     private static final String JOINQUANT_ACCOUNT3_PASSWORD = "Fw6]i7W?]Whs8W-Snf";
@@ -376,25 +376,24 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
             object.put("date", DateUtil.formatDateToString(new Date(), "yyyy-MM-dd"));
             str = joinQuantRequest("get_all_securities", object);
 
-            redisUtil.setEx(JOINQUANT_ALL_SECURITIES_PRE + type, csvUtil.getJSON(str, ","), 3, TimeUnit.DAYS);
+            redisUtil.setEx(JOINQUANT_ALL_SECURITIES_PRE + type, csvUtil.getJSON(str, ","), 15, TimeUnit.HOURS);
         }
 
         List<JoinQuantSecurityEntity> joinQuantSecurityEntities = new ArrayList<>();
 
         JSONArray jsonArray = JSONArray.parseArray(str);
         if (jsonArray != null) {
-            jsonArray.stream().forEach(
-                    obj -> {
-                        JSONObject data = JSONObject.parseObject(JSONObject.toJSONString(obj));
-                        JoinQuantSecurityEntity joinQuantSecurityEntity = new JoinQuantSecurityEntity();
-                        joinQuantSecurityEntity.setStockCode(data.getString("code"));
-                        joinQuantSecurityEntity.setDisplayName(data.getString("display_name"));
-                        joinQuantSecurityEntity.setType(data.getString("type"));
-                        joinQuantSecurityEntity.setStartDate(DateUtil.formatStringToDate(data.getString("start_date"), "yyyy-MM-dd"));
-                        joinQuantSecurityEntity.setEndDate(DateUtil.formatStringToDate(data.getString("end_date"), "yyyy-MM-dd"));
-                        joinQuantSecurityEntities.add(joinQuantSecurityEntity);
-                    }
-            );
+            for (int i = 0; i < jsonArray.size(); i++ ) {
+                JSONObject data = JSONObject.parseObject(JSONObject.toJSONString(jsonArray.get(i)));
+                JoinQuantSecurityEntity joinQuantSecurityEntity = new JoinQuantSecurityEntity();
+                joinQuantSecurityEntity.setNumber(i);
+                joinQuantSecurityEntity.setStockCode(data.getString("code"));
+                joinQuantSecurityEntity.setDisplayName(data.getString("display_name"));
+                joinQuantSecurityEntity.setType(data.getString("type"));
+                joinQuantSecurityEntity.setStartDate(DateUtil.formatStringToDate(data.getString("start_date"), "yyyy-MM-dd"));
+                joinQuantSecurityEntity.setEndDate(DateUtil.formatStringToDate(data.getString("end_date"), "yyyy-MM-dd"));
+                joinQuantSecurityEntities.add(joinQuantSecurityEntity);
+            }
         }
 
 
