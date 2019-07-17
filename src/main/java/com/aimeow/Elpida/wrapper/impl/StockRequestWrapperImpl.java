@@ -21,6 +21,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +34,8 @@ import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_FULL;
 
 @Component
 public class StockRequestWrapperImpl implements StockRequestWrapper {
+
+    private static Logger logger = LoggerFactory.getLogger(StockRequestWrapper.class);
 
     private static final String TU_API_URI = "http://api.waditu.com";
     private static final String TU_STOCK_LIST = "stock_basic";
@@ -511,6 +515,8 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         }
 
         String content = EntityUtils.toString(response.getEntity(), "UTF-8");
+
+        logger.error(content);
 
         if (response != null) {
             response.close();

@@ -26,6 +26,8 @@
 		<httpclient.version>4.5.8</httpclient.version>
 		<rxjava.version>2.2.2</rxjava.version>
 		<fastjson.version>1.2.51</fastjson.version>
+		<slf4j.version>1.7.25</slf4j.version>
+
 	</properties>
 
 	<dependencies>
@@ -83,13 +85,18 @@
 			<artifactId>httpclient</artifactId>
 			<version>${httpclient.version}</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/no.laukvik/csv -->
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
 		<dependency>
-			<groupId>no.laukvik</groupId>
-			<artifactId>csv</artifactId>
-			<version>0.9.3</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
 		</dependency>
-
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12 -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
