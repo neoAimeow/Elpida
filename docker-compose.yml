@@ -3,9 +3,9 @@ version: '2.0'
 services:
 
   api:
-    image: Elpida-api
+    image: elpida-api
     build: .
-    container_name: Elpida-api
+    container_name: elpida-api
     restart: always
     expose:
       - "443"
