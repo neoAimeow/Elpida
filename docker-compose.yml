@@ -1,0 +1,21 @@
+version: '2.0'
+
+services:
+
+  api:
+    image: Elpida-api
+    build: .
+    container_name: Elpida-api
+    restart: always
+    expose:
+      - "443"
+    environment:
+      VIRTUAL_HOST: elpida-api.aimeow.com
+      VIRTUAL_PORT: 8080
+      LETSENCRYPT_HOST: elpida-api.aimeow.com
+      LETSENCRYPT_EMAIL: a18814888787@gmail.com
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
