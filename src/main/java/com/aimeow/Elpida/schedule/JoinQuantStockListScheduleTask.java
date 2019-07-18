@@ -18,6 +18,7 @@ public class JoinQuantStockListScheduleTask {
 
     //每天早上8点触发
     @Scheduled(cron = "0 0 8 * * ?")
+//    @Scheduled(cron = "0/10 * * * * ?")
     private void configureTasks() {
         try {
             joinQuantStockController.joinQuantGetAllSecurities("stock");

@@ -17,6 +17,7 @@ public class TuDailyStockDataScheduleTask {
     @Autowired private TuStockController tuStockController;
 
     @Scheduled(cron = "0 0 19 * * ?")
+//    @Scheduled(cron = "0/20 * * * * ?")
     private void configureTasks() {
         try {
             tuStockController.analyzeStockDataWithTradeData(DateUtil.formatDateToString(new Date(), "yyyy-MM-dd"));
