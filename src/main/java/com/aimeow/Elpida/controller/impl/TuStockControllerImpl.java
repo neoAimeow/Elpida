@@ -116,10 +116,10 @@ public class TuStockControllerImpl implements TuStockController {
         Comparator<NewsEntity> comparator = new Comparator<NewsEntity>() {
             @Override
             public int compare(NewsEntity o1, NewsEntity o2) {
-                if (o1.getDateTime().before(o2.getDateTime())) {
-                    return 1;
+                if (o1 == null || o2 == null) {
+                    return 0;
                 } else {
-                    return -1;
+                    return o1.getDateTime().compareTo(o2.getDateTime());
                 }
             }
         };
