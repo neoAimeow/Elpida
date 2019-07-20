@@ -153,6 +153,10 @@ public class TuStockControllerImpl implements TuStockController {
     @Override
     public Result<AnalyzeEntity> getAnalysisResultWithTradeDate(String tradeDate) throws Exception {
         String dataStr = redisUtil.get(ANALYZE_STOCK_PRE + tradeDate);
+        if (null == dataStr) {
+            return ResultUtil.getFailureResult("analysisResult get error, dataStr is empty.");
+        }
+
         JSONObject jsonObject = JSONObject.parseObject(dataStr);
         JSONObject model = jsonObject.getJSONObject("model");
         AnalyzeEntity analyzeEntity = JSONObject.parseObject(JSON.toJSONString(model), AnalyzeEntity.class);

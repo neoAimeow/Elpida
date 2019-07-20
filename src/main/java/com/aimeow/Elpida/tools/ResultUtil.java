@@ -28,7 +28,7 @@ public class ResultUtil {
         return result;
     }
 
-    public static Result getFailureResult(String errorMessage,String errorCode){
+    public static Result getFailureResult(String errorCode,String errorMessage){
         Result result = new Result();
         result.setSuccess(false);
         result.setErrorMsg(errorMessage);
