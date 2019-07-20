@@ -119,7 +119,7 @@ public class TuStockControllerImpl implements TuStockController {
                 if (o1 == null || o2 == null) {
                     return 0;
                 } else {
-                    return o1.getDateTime().compareTo(o2.getDateTime());
+                    return -o1.getDateTime().compareTo(o2.getDateTime());
                 }
             }
         };
