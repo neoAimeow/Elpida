@@ -349,17 +349,17 @@ public class TuStockControllerImpl implements TuStockController {
     @Override
     public String test() throws Exception {
         List<String> yearList = new ArrayList<>();
-//        yearList.add("2008");
-//        yearList.add("2009");
-//        yearList.add("2010");
-//        yearList.add("2011");
-//        yearList.add("2012");
-//        yearList.add("2013");
-//        yearList.add("2014");
-//        yearList.add("2015");
-//        yearList.add("2016");
-//        yearList.add("2017");
-//        yearList.add("2018");
+        yearList.add("2008");
+        yearList.add("2009");
+        yearList.add("2010");
+        yearList.add("2011");
+        yearList.add("2012");
+        yearList.add("2013");
+        yearList.add("2014");
+        yearList.add("2015");
+        yearList.add("2016");
+        yearList.add("2017");
+        yearList.add("2018");
         yearList.add("2019");
 
 

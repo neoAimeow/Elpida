@@ -191,7 +191,9 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                             tuNewStockEntity.setStockCode(stockData.getString(0));
                             tuNewStockEntity.setStockName(stockData.getString(2));
                             tuNewStockEntity.setIpoDate(DateUtil.formatStringToDate(stockData.getString(3), "yyyyMMdd"));
-                            tuNewStockEntity.setIssueDate(DateUtil.formatStringToDate(stockData.getString(4), "yyyyMMdd"));
+                            if (stockData.getString(4) != null && !stockData.getString(4).equals("nan")) {
+                                tuNewStockEntity.setIssueDate(DateUtil.formatStringToDate(stockData.getString(4), "yyyyMMdd"));
+                            }
                             newStockEntities.add(tuNewStockEntity);
                         }
                 );
@@ -505,7 +507,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
         object.put("end_date", DateUtil.formatDateToString(tradeDate, "yyyy-MM-dd"));
         object.put("unit", unit);
         String str = joinQuantRequest("get_price_period", object, accountCode);
-        System.out.println(csvUtil.getJSON(str, ","));
+//        System.out.println(csvUtil.getJSON(str, ","));
         return null;
     }
 
@@ -585,7 +587,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
             content = request(JOINQUANT_API_URI, rawObject);
         }
 
-        System.out.println(content);
+//        System.out.println(content);
 
         return content;
     }
@@ -609,7 +611,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
 
         String content = EntityUtils.toString(response.getEntity(), "UTF-8");
 
-        logger.error(content);
+//        logger.error(content);
 
         if (response != null) {
             response.close();
