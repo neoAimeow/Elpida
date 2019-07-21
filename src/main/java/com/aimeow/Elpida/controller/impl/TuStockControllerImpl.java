@@ -170,46 +170,6 @@ public class TuStockControllerImpl implements TuStockController {
     }
 
     @Override
-    public Result<List<AnalyzeEntity>> getLastTwentyDaysAnalysisResultWithTradeDate(String tradeDate) throws Exception {
-        Date dateAfter = DateUtil.formatStringToDate(tradeDate, "yyyyMMdd");
-        String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
-        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -20);
-        Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
-
-        List<AnalyzeEntity> analyzeEntities = new ArrayList<>();
-
-        List<TradeCalendarEntity> tradeCalendarEntities = stockRequestWrapper.tuRequestTradeCalendar(dateBefore, dateAfter);
-        tradeCalendarEntities.parallelStream().forEach(
-                obj -> {
-                    try {
-                        if (obj.getIsOpen()) {
-                            AnalyzeEntity analyzeEntity = getAnalysisResultWithTradeDate(
-                                    DateUtil.formatDateToString(obj.getCalDate(), "yyyyMMdd")).getModel();
-                            analyzeEntities.add(analyzeEntity);
-                        }
-                    } catch (Exception ex) {
-                        System.out.println("getLastTwentyDaysAnalysisResultError" + ex.getMessage());
-                    }
-                }
-        );
-
-        Comparator<AnalyzeEntity> comparator = new Comparator<AnalyzeEntity>() {
-            @Override
-            public int compare(AnalyzeEntity o1, AnalyzeEntity o2) {
-                if (o1.getTradeDate().before(o2.getTradeDate())) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            }
-        };
-
-        Collections.sort(analyzeEntities, comparator);
-
-        return ResultUtil.buildSuccessResult(new Result<>(), analyzeEntities);
-    }
-
-    @Override
     public Result<AnalyzeEntity> analyzeStockDataWithTradeData(@NonNull String tradeDate) throws Exception {
         List<TuNewStockEntity> newStockEntities = getNewStockInfo(30).getModel();
         List<TuDailyStockEntity> stockEntityList = getDailyStockWithTradeDate(tradeDate).getModel();
