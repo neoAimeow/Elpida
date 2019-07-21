@@ -1,9 +1,6 @@
 package com.aimeow.Elpida.assembler;
 
-import com.aimeow.Elpida.entity.tushare.TuDailyStockEntity;
-import com.aimeow.Elpida.entity.tushare.TuFullStockEntity;
-import com.aimeow.Elpida.entity.tushare.TuStockBasicEntity;
-import com.aimeow.Elpida.entity.tushare.TuStockListEntity;
+import com.aimeow.Elpida.entity.tushare.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +37,8 @@ public class StockAssembler {
 
     public static List<TuFullStockEntity> assemblerStocks(List<TuStockBasicEntity> stockBasicEntities,
                                                           List<TuDailyStockEntity> dailyStockEntities,
-                                                          List<TuStockListEntity> stockListEntities) {
+                                                          List<TuStockListEntity> stockListEntities,
+                                                          List<TuNewStockEntity> newStockEntities) {
         List<TuFullStockEntity> fullStockEntities = new ArrayList<>();
         for (TuDailyStockEntity tuDailyStockEntity : dailyStockEntities) {
             for (TuStockBasicEntity tuStockBasicEntity : stockBasicEntities) {
@@ -48,6 +46,12 @@ public class StockAssembler {
                     for (TuStockListEntity tuStockListEntity : stockListEntities) {
                         if (tuStockListEntity.getStockCode().equals(tuStockBasicEntity.getStockCode())) {
                             TuFullStockEntity tuFullStockEntity = assemblerStock(tuStockBasicEntity, tuDailyStockEntity, tuStockListEntity);
+
+                            for (TuNewStockEntity newStockEntity : newStockEntities) {
+                                if (tuFullStockEntity.getStockCode().equals(newStockEntity.getStockCode())) {
+                                    tuFullStockEntity.setIsNew(true);
+                                }
+                            }
                             fullStockEntities.add(tuFullStockEntity);
                         }
                     }

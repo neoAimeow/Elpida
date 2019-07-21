@@ -60,6 +60,11 @@ public class TuStockControllerImpl implements TuStockController {
     }
 
     @Override
+    public Result<List<TuNewStockEntity>> getNewStockInfo(Integer day) throws Exception {
+        return ResultUtil.buildSuccessResult(new Result<>(), stockRequestWrapper.tuRequestNewStockInfo(day));
+    }
+
+    @Override
     public Result<List<TuStockBasicEntity>> getBasicStockDataWithTradeDate(String tradeDate) throws Exception {
         List<TuStockBasicEntity> stockBasicEntities = stockRequestWrapper.tuRequestBasicStockInfoWithTradeDate(
                 DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"));
@@ -206,6 +211,7 @@ public class TuStockControllerImpl implements TuStockController {
 
     @Override
     public Result<AnalyzeEntity> analyzeStockDataWithTradeData(@NonNull String tradeDate) throws Exception {
+        List<TuNewStockEntity> newStockEntities = getNewStockInfo(30).getModel();
         List<TuDailyStockEntity> stockEntityList = getDailyStockWithTradeDate(tradeDate).getModel();
         List<TuStockBasicEntity> tuStockBasicEntityList = getBasicStockDataWithTradeDate(tradeDate).getModel();
         List<TuStockListEntity> tuStockListEntityList = getUpdateStockListWithStatus("L").getModel();
@@ -213,7 +219,8 @@ public class TuStockControllerImpl implements TuStockController {
         List<HoldingSharesEntity> holdingSharesEntities = getHoldingShareChangeWithTradeDate(tradeDate).getModel();
         MoneyFlowEntity moneyFlowEntity = getMoneyFlowWithTradeDate(tradeDate).getModel();
 
-        List<TuFullStockEntity> tuFullStockEntityList = StockAssembler.assemblerStocks(tuStockBasicEntityList, stockEntityList, tuStockListEntityList);
+        List<TuFullStockEntity> tuFullStockEntityList = StockAssembler.assemblerStocks(
+                tuStockBasicEntityList, stockEntityList, tuStockListEntityList, newStockEntities);
 
         List<TuFullStockEntity> limitUpList = new ArrayList<>();
         List<TuFullStockEntity> limitDownList = new ArrayList<>();
@@ -278,14 +285,7 @@ public class TuStockControllerImpl implements TuStockController {
         analyzeEntity.setUpAmount(upList.size());
         analyzeEntity.setDownAmount(downList.size());
 
-
-//        //分析连板数
-        List<AnalyzeEntity> lastTwentyDaysAnalyze = getLastTwentyDaysAnalysisResultWithTradeDate(tradeDate).getModel();
-        if (lastTwentyDaysAnalyze.size() > 0 && DateUtil.formatDateToString(
-                lastTwentyDaysAnalyze.get(0).getTradeDate(),"yyyyMMdd").equals(tradeDate)) {
-            lastTwentyDaysAnalyze.remove(0);
-        }
-        Map<String, List<TuSimpleStockEntity>> map = analyzeContinuousStocksWithAnalyzeEntities(analyzeEntity, lastTwentyDaysAnalyze);
+        Map<String, List<TuSimpleStockEntity>> map = analyzeContinuousStocksWithAnalyzeEntities(analyzeEntity, tradeDate);
         analyzeEntity.setContinuousLimitUpStocks(map);
 
         Result<AnalyzeEntity> analyzeEntityResult = ResultUtil.buildSuccessResult(new Result<>(),analyzeEntity);
@@ -299,63 +299,49 @@ public class TuStockControllerImpl implements TuStockController {
 //    }
 
     private Map<String, List<TuSimpleStockEntity>> analyzeContinuousStocksWithAnalyzeEntities(
-            @NonNull AnalyzeEntity todayAnalyze, @NonNull List<AnalyzeEntity> analyzeEntities) {
-        Map<TuSimpleStockEntity, JSONObject> simpleStockEntityIntegerMap = new HashMap<>();
-
-        //初始化生成map
-        List<TuFullStockEntity> fullStockEntities = todayAnalyze.getLimitUpStocks();
-        for (TuFullStockEntity tuFullStockEntity : fullStockEntities) {
-            TuSimpleStockEntity tuSimpleStockEntity = new TuSimpleStockEntity();
-            tuSimpleStockEntity.setStockCode(tuFullStockEntity.getStockCode());
-            tuSimpleStockEntity.setStockName(tuFullStockEntity.getStockName());
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("count", 1);
-            jsonObject.put("flag", 0);
-            simpleStockEntityIntegerMap.put(tuSimpleStockEntity, jsonObject);
-        }
-
-        for (AnalyzeEntity analyzeEntity : analyzeEntities) {
-            List<TuFullStockEntity> limitUpList = analyzeEntity.getLimitUpStocks();
-            for (TuFullStockEntity tuFullStockEntity : limitUpList) {
-
-                TuSimpleStockEntity target = null;
-                for (Map.Entry<TuSimpleStockEntity, JSONObject> entry : simpleStockEntityIntegerMap.entrySet()) {
-                    TuSimpleStockEntity tuSimpleStockEntity = entry.getKey();
-                    if (tuSimpleStockEntity.getStockCode().equals(tuFullStockEntity.getStockCode())) {
-                        target = tuSimpleStockEntity;
-                    }
-                }
-                JSONObject object = simpleStockEntityIntegerMap.get(target);
-
-                if (target != null && (object.getInteger("flag") == 0 || object.getInteger("flag") == 1)) {
-                    object.put("count", object.getInteger("count") + 1);
-                    object.put("flag", 1);
-                    simpleStockEntityIntegerMap.put(target, object);
-                }
-            }
-
-            for (Map.Entry<TuSimpleStockEntity, JSONObject> entry : simpleStockEntityIntegerMap.entrySet()) {
-                JSONObject tempObj = entry.getValue();
-                if (tempObj.getInteger("flag") == 0) {
-                    tempObj.put("flag", 2);
-                } else if (tempObj.getInteger("flag") == 1) {
-                    tempObj.put("flag", 0);
-                }
-                simpleStockEntityIntegerMap.put(entry.getKey(), tempObj);
-            }
-        }
+            @NonNull AnalyzeEntity todayAnalyze, @NonNull String tradeDate) throws Exception {
+        Date dateAfter = DateUtil.formatStringToDate(tradeDate, "yyyyMMdd");
+        String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
+        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -20);
+        Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
 
         Map<String, List<TuSimpleStockEntity>> myNewHashMap = new HashMap<>();
 
-        for(Map.Entry<TuSimpleStockEntity, JSONObject> entry : simpleStockEntityIntegerMap.entrySet()) {
-            if (myNewHashMap.get(entry.getValue().getString("count")) == null) {
-                List<TuSimpleStockEntity> simpleStockEntities = new ArrayList<>();
-                myNewHashMap.put(entry.getValue().getString("count"), simpleStockEntities);
-            }
-            List<TuSimpleStockEntity> simpleStockEntities = myNewHashMap.get(entry.getValue().getString("count"));
-            simpleStockEntities.add(entry.getKey());
-            myNewHashMap.put(entry.getValue().getString("count"), simpleStockEntities);
-        }
+        //初始化生成map
+        List<TuFullStockEntity> fullStockEntities = todayAnalyze.getLimitUpStocks();
+
+        fullStockEntities.parallelStream().forEach(
+                obj -> {
+                    try {
+                        TuSimpleStockEntity tuSimpleStockEntity = new TuSimpleStockEntity();
+                        tuSimpleStockEntity.setStockCode(obj.getStockCode());
+                        tuSimpleStockEntity.setStockName(obj.getStockName());
+                        tuSimpleStockEntity.setIsNew(obj.getIsNew());
+
+                        List<TuDailyStockEntity> historyStockEntities =  stockRequestWrapper.tuRequestDailyStockInfoWithStockCode(obj.getStockCode(), dateBefore, dateAfter);
+
+                        Integer count = 0;
+                        for (TuDailyStockEntity dailyStockEntity : historyStockEntities) {
+                            if (dailyStockEntity.getChangeRate() > 9.8) {
+                                count ++;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (myNewHashMap.get(count.toString()) == null) {
+                            List<TuSimpleStockEntity> simpleStockEntities = new ArrayList<>();
+                            myNewHashMap.put(count.toString(), simpleStockEntities);
+                        }
+
+                        List<TuSimpleStockEntity> tuDailyStockEntities = myNewHashMap.get(count.toString());
+                        tuDailyStockEntities.add(tuSimpleStockEntity);
+
+                    } catch (Exception ex) {
+
+                    }
+                }
+        );
 
         return myNewHashMap;
     }

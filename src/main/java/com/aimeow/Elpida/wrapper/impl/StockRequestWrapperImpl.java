@@ -4,6 +4,7 @@ import com.aimeow.Elpida.entity.*;
 import com.aimeow.Elpida.entity.joinQuant.JoinQuantSecurityEntity;
 import com.aimeow.Elpida.entity.joinQuant.JoinQuantStockEntity;
 import com.aimeow.Elpida.entity.tushare.TuDailyStockEntity;
+import com.aimeow.Elpida.entity.tushare.TuNewStockEntity;
 import com.aimeow.Elpida.entity.tushare.TuStockBasicEntity;
 import com.aimeow.Elpida.entity.tushare.TuStockListEntity;
 import com.aimeow.Elpida.tools.CsvUtil;
@@ -31,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_FULL;
+import static com.aimeow.Elpida.tools.DateUtil.DATE_FORMAT_YMD;
 
 @Component
 public class StockRequestWrapperImpl implements StockRequestWrapper {
@@ -40,6 +42,7 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     private static final String TU_API_URI = "http://api.waditu.com";
     private static final String TU_STOCK_LIST = "stock_basic";
     private static final String TU_DAILY_STOCK = "daily";
+    private static final String TU_NEW_STOCK = "new_share";
     private static final String TU_BASIC_STOCK_INFO = "daily_basic";
     private static final String TU_TRADE_CALENDAR = "trade_cal";
     private static final String TU_INDEX_DAILY = "index_daily";
@@ -106,6 +109,96 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
 
         return dailyStockEntities;
 
+    }
+
+    @Override
+    public List<TuDailyStockEntity> tuRequestDailyStockInfoWithStockCode(String stockCode, Date startDate, Date endDate) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("start_date", DateUtil.formatDateToString(startDate, "yyyyMMdd"));
+        params.put("end_date", DateUtil.formatDateToString(endDate, "yyyyMMdd"));
+        params.put("ts_code", stockCode);
+
+        JSONObject result = tuRequest(TU_DAILY_STOCK, params);
+        //parse JSONObject to Entity;
+        List<TuDailyStockEntity> dailyStockEntities = new ArrayList<>();
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+                            TuDailyStockEntity tuDailyStockEntity = new TuDailyStockEntity();
+                            tuDailyStockEntity.setStockCode(stockData.getString(0));
+                            tuDailyStockEntity.setTradeDate(DateUtil.formatStringToDate(
+                                    stockData.getString(1), "yyyyMMdd"));
+                            tuDailyStockEntity.setOpenPrice(stockData.getFloat(2));
+                            tuDailyStockEntity.setHighPrice(stockData.getFloat(3));
+                            tuDailyStockEntity.setLowPrice(stockData.getFloat(4));
+                            tuDailyStockEntity.setClosePrice(stockData.getFloat(5));
+                            tuDailyStockEntity.setPrePrice(stockData.getFloat(6));
+                            tuDailyStockEntity.setChangePrice(stockData.getFloat(7));
+                            tuDailyStockEntity.setChangeRate(stockData.getFloat(8));
+                            tuDailyStockEntity.setVolume(stockData.getFloat(9));
+                            tuDailyStockEntity.setAmount(stockData.getFloat(10));
+                            dailyStockEntities.add(tuDailyStockEntity);
+                        }
+                );
+            }
+        }
+
+        Comparator<TuDailyStockEntity> comparator = new Comparator<TuDailyStockEntity>() {
+            @Override
+            public int compare(TuDailyStockEntity o1, TuDailyStockEntity o2) {
+                if (o1 == null || o2 == null) {
+                    return 0;
+                } else {
+                    return -o1.getTradeDate().compareTo(o2.getTradeDate());
+                }
+            }
+        };
+
+        Collections.sort(dailyStockEntities, comparator);
+
+        return dailyStockEntities;
+
+    }
+
+    @Override
+    public List<TuNewStockEntity> tuRequestNewStockInfo(Integer day) throws Exception {
+        Date dateAfter = new Date();
+        String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
+        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -day);
+        Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
+
+        JSONObject params = new JSONObject();
+        params.put("start_date", DateUtil.formatDateToString(dateBefore, "yyyyMMdd"));
+        params.put("end_date", DateUtil.formatDateToString(dateAfter, "yyyyMMdd"));
+
+        JSONObject result = tuRequest(TU_NEW_STOCK, params);
+        //parse JSONObject to Entity;
+        List<TuNewStockEntity> newStockEntities = new ArrayList<>();
+
+        JSONObject data = result.getJSONObject("data");
+        if (data != null) {
+            JSONArray array = data.getJSONArray("items");
+            if (array != null) {
+                array.stream().forEach(
+                        obj -> {
+                            JSONArray stockData = JSONArray.parseArray(JSON.toJSONString(obj));
+                            TuNewStockEntity tuNewStockEntity = new TuNewStockEntity();
+                            tuNewStockEntity.setStockCode(stockData.getString(0));
+                            tuNewStockEntity.setStockName(stockData.getString(2));
+                            tuNewStockEntity.setIpoDate(DateUtil.formatStringToDate(stockData.getString(3), "yyyyMMdd"));
+                            tuNewStockEntity.setIssueDate(DateUtil.formatStringToDate(stockData.getString(4), "yyyyMMdd"));
+                            newStockEntities.add(tuNewStockEntity);
+                        }
+                );
+            }
+        }
+
+        return newStockEntities;
     }
 
     @Override

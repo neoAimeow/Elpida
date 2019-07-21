@@ -2,6 +2,7 @@ package com.aimeow.Elpida.controller;
 
 import com.aimeow.Elpida.entity.*;
 import com.aimeow.Elpida.entity.tushare.TuDailyStockEntity;
+import com.aimeow.Elpida.entity.tushare.TuNewStockEntity;
 import com.aimeow.Elpida.entity.tushare.TuStockBasicEntity;
 import com.aimeow.Elpida.entity.tushare.TuStockListEntity;
 import com.aimeow.Elpida.tools.Result;
@@ -25,6 +26,9 @@ public interface TuStockController {
     @RequestMapping(value = "/getDailyStockData", method = RequestMethod.GET)
     /** 获得某一天所有股票的行情信息 yyyyMMdd */
     Result<List<TuDailyStockEntity>> getDailyStockWithTradeDate(String tradeDate) throws Exception;
+
+    @RequestMapping(value = "/getNewStockData", method = RequestMethod.GET)
+    Result<List<TuNewStockEntity>> getNewStockInfo(Integer day) throws Exception;
 
     /** 获得某一天所有股票的基本信息 yyyyMMdd */
     @RequestMapping(value = "getBasicStockData", method = RequestMethod.GET)

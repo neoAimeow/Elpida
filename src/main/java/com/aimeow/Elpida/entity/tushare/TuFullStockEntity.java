@@ -52,4 +52,6 @@ public class TuFullStockEntity {
     private Float totalMv;
     /** 流通市值 */
     private Float circMv;
+    /** 是不是新股 */
+    private Boolean isNew = false;
 }

@@ -61,6 +61,9 @@ public class DateUtil {
      *       @
      */
     public static Date formatStringToDate(String date, String format) {
+        if (date == null) {
+            return null;
+        }
         SimpleDateFormat sdf = new SimpleDateFormat(format);
         try {
             return sdf.parse(date);
