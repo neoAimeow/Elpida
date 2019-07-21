@@ -28,7 +28,7 @@ public interface TuStockController {
     Result<List<TuDailyStockEntity>> getDailyStockWithTradeDate(String tradeDate) throws Exception;
 
     @RequestMapping(value = "/getNewStockData", method = RequestMethod.GET)
-    Result<List<TuNewStockEntity>> getNewStockInfo(Integer day) throws Exception;
+    Result<List<TuNewStockEntity>> getNewStockInfo(String startDate, String endDate) throws Exception;
 
     /** 获得某一天所有股票的基本信息 yyyyMMdd */
     @RequestMapping(value = "getBasicStockData", method = RequestMethod.GET)

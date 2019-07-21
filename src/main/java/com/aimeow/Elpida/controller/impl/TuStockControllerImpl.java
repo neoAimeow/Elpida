@@ -14,8 +14,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -60,8 +64,17 @@ public class TuStockControllerImpl implements TuStockController {
     }
 
     @Override
-    public Result<List<TuNewStockEntity>> getNewStockInfo(Integer day) throws Exception {
-        return ResultUtil.buildSuccessResult(new Result<>(), stockRequestWrapper.tuRequestNewStockInfo(day));
+    public Result<List<TuNewStockEntity>> getNewStockInfo(String startDate, String endDate) throws Exception {
+        List<TuNewStockEntity> newStockEntities = stockRequestWrapper.tuRequestNewStockInfo(
+                DateUtil.formatStringToDate(startDate, "yyyyMMdd"), DateUtil.formatStringToDate(endDate, "yyyyMMdd"));
+        for (TuNewStockEntity newStockEntity : newStockEntities) {
+            Query query=new Query(Criteria.where("stockCode").is(newStockEntity.getStockCode()));
+            TuNewStockEntity td =  mongoTemplate.findOne(query , TuNewStockEntity.class);
+            if (td == null) {
+                mongoTemplate.save(newStockEntity);
+            }
+        }
+        return ResultUtil.buildSuccessResult(new Result<>(), newStockEntities);
     }
 
     @Override
@@ -171,7 +184,20 @@ public class TuStockControllerImpl implements TuStockController {
 
     @Override
     public Result<AnalyzeEntity> analyzeStockDataWithTradeData(@NonNull String tradeDate) throws Exception {
-        List<TuNewStockEntity> newStockEntities = getNewStockInfo(30).getModel();
+
+        Date dateAfter = DateUtil.formatStringToDate(tradeDate, "yyyyMMdd");
+        String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
+        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -15);
+        Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
+
+
+        Query query = new Query();
+        query.with(new Sort(Sort.Direction.DESC, "issueDate"));
+        Criteria criteria = Criteria.where("issueDate").gte(dateBefore).lt(dateAfter);
+        query.addCriteria(criteria);
+
+        List<TuNewStockEntity> newStockEntities =  mongoTemplate.find(query, TuNewStockEntity.class);
+
         List<TuDailyStockEntity> stockEntityList = getDailyStockWithTradeDate(tradeDate).getModel();
         List<TuStockBasicEntity> tuStockBasicEntityList = getBasicStockDataWithTradeDate(tradeDate).getModel();
         List<TuStockListEntity> tuStockListEntityList = getUpdateStockListWithStatus("L").getModel();
@@ -276,7 +302,6 @@ public class TuStockControllerImpl implements TuStockController {
                         TuSimpleStockEntity tuSimpleStockEntity = new TuSimpleStockEntity();
                         tuSimpleStockEntity.setStockCode(obj.getStockCode());
                         tuSimpleStockEntity.setStockName(obj.getStockName());
-                        tuSimpleStockEntity.setIsNew(obj.getIsNew());
 
                         List<TuDailyStockEntity> historyStockEntities =  stockRequestWrapper.tuRequestDailyStockInfoWithStockCode(obj.getStockCode(), dateBefore, dateAfter);
 

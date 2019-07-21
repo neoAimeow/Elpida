@@ -166,17 +166,14 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
     }
 
     @Override
-    public List<TuNewStockEntity> tuRequestNewStockInfo(Integer day) throws Exception {
-        Date dateAfter = new Date();
-        String dateAfterStr = DateUtil.formatDateToString(dateAfter, DATE_FORMAT_YMD);
-        String beforeDateStr = DateUtil.getCalculateDateToString(dateAfterStr, -day);
-        Date dateBefore = DateUtil.formatStringToDate(beforeDateStr, DATE_FORMAT_YMD);
+    public List<TuNewStockEntity> tuRequestNewStockInfo(Date startDate, Date endDate) throws Exception {
 
         JSONObject params = new JSONObject();
-        params.put("start_date", DateUtil.formatDateToString(dateBefore, "yyyyMMdd"));
-        params.put("end_date", DateUtil.formatDateToString(dateAfter, "yyyyMMdd"));
+        params.put("start_date", DateUtil.formatDateToString(startDate, "yyyyMMdd"));
+        params.put("end_date", DateUtil.formatDateToString(endDate, "yyyyMMdd"));
 
         JSONObject result = tuRequest(TU_NEW_STOCK, params);
+        System.out.println(JSONObject.toJSONString(result));
         //parse JSONObject to Entity;
         List<TuNewStockEntity> newStockEntities = new ArrayList<>();
 
@@ -193,8 +190,8 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                             tuNewStockEntity.setIpoDate(DateUtil.formatStringToDate(stockData.getString(3), "yyyyMMdd"));
                             if (stockData.getString(4) != null && !stockData.getString(4).equals("nan")) {
                                 tuNewStockEntity.setIssueDate(DateUtil.formatStringToDate(stockData.getString(4), "yyyyMMdd"));
+                                newStockEntities.add(tuNewStockEntity);
                             }
-                            newStockEntities.add(tuNewStockEntity);
                         }
                 );
             }

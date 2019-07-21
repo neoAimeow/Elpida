@@ -24,8 +24,8 @@ public interface StockRequestWrapper {
     /** tushare通过股票代码，查询开始时间与结束时间来获取这段时间这个股票的日线行情 */
     List<TuDailyStockEntity> tuRequestDailyStockInfoWithStockCode(String stockCode, Date startDate, Date endDate) throws Exception;
 
-    /** tushare 查询最近一段时间（day）上市的新股 */
-    List<TuNewStockEntity> tuRequestNewStockInfo(Integer day) throws Exception;
+    /** tushare 查询最近一段时间上市的新股 */
+    List<TuNewStockEntity> tuRequestNewStockInfo(Date startDate, Date endDate) throws Exception;
 
     /** tushare通过交易时间来 获取当时所有股票的基础信息数据 */
     List<TuStockBasicEntity> tuRequestBasicStockInfoWithTradeDate(Date tradeDate) throws Exception;

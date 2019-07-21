@@ -6,5 +6,4 @@ import lombok.Data;
 public class TuSimpleStockEntity {
     private String stockCode;
     private String stockName;
-    private Boolean isNew;
 }

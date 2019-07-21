@@ -3,6 +3,7 @@ package com.aimeow.Elpida.assembler;
 import com.aimeow.Elpida.entity.tushare.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class StockAssembler {
@@ -58,6 +59,15 @@ public class StockAssembler {
                 }
             }
         }
+
+        Iterator<TuFullStockEntity> it = fullStockEntities.iterator();
+        while (it.hasNext()) {
+            TuFullStockEntity tuFullStockEntity = it.next();
+            if (tuFullStockEntity.getIsNew()) {
+                it.remove();
+            }
+        }
+
         return fullStockEntities;
     }
 }
