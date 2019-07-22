@@ -301,6 +301,17 @@ public class StockRequestWrapperImpl implements StockRequestWrapper {
                             newsEntity.setContent(stockData.getString(1));
                             newsEntity.setTitle(stockData.getString(2));
                             newsEntity.setSrc(src);
+                            if (src.equals("yuncaijing")) {
+                                newsEntity.setSrcStr("云财经");
+                            } else if (src.equals("sina")) {
+                                newsEntity.setSrcStr("新浪财经");
+                            } else if (src.equals("wallstreetcn")) {
+                                newsEntity.setSrcStr("华尔街见闻");
+                            } else if (src.equals("10jqka")) {
+                                newsEntity.setSrcStr("同花顺");
+                            } else if (src.equals("eastmoney")) {
+                                newsEntity.setSrcStr("东方财富");
+                            }
                             newsEntities.add(newsEntity);
                         }
                 );

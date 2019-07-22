@@ -10,4 +10,5 @@ public class NewsEntity {
     private String title;
     private String content;
     private String src;
+    private String srcStr;
 }
