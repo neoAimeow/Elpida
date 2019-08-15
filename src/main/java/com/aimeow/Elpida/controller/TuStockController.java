@@ -38,9 +38,15 @@ public interface TuStockController {
     @RequestMapping(value = "getIndexStockData", method = RequestMethod.GET)
     Result<List<TuDailyStockEntity>> getIndexStockDataWithTradeDate(String tradeDate) throws Exception;
 
+    @RequestMapping(value = "collectNewsFromTuShare", method = RequestMethod.GET)
+    Result<List<NewsEntity>> collectNewsFromTuShare(String tradeDate) throws Exception;
+
     /** 获得某一天的新闻 */
     @RequestMapping(value = "getNews", method = RequestMethod.GET)
     Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception;
+
+    @RequestMapping(value = "markNewsAsImportant", method = RequestMethod.GET)
+    Result<Boolean> markNewsAsImportant(String title, String content, String newsDate, String src, String srcStr);
 
     /** 获得股东增减持 */
     @RequestMapping(value = "getHoldingSharesChange", method = RequestMethod.GET)
@@ -65,6 +71,9 @@ public interface TuStockController {
 
     @RequestMapping(value = "test", method = RequestMethod.GET)
     String test() throws Exception;
+
+    @RequestMapping(value = "test2", method = RequestMethod.GET)
+    String test2() throws Exception;
 
 //    @RequestMapping(value = "test2", method = RequestMethod.GET)
 //    String test2() throws Exception;

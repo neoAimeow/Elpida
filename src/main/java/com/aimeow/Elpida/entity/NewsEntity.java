@@ -11,4 +11,5 @@ public class NewsEntity {
     private String content;
     private String src;
     private String srcStr;
+    private Boolean isMark = false;
 }

@@ -108,7 +108,7 @@ public class TuStockControllerImpl implements TuStockController {
     }
 
     @Override
-    public Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception {
+    public Result<List<NewsEntity>> collectNewsFromTuShare(String tradeDate) throws Exception {
         List<String> srcList = new ArrayList<>();
         srcList.add("sina");
         srcList.add("wallstreetcn");
@@ -131,20 +131,59 @@ public class TuStockControllerImpl implements TuStockController {
                 }
         );
 
-        Comparator<NewsEntity> comparator = new Comparator<NewsEntity>() {
-            @Override
-            public int compare(NewsEntity o1, NewsEntity o2) {
-                if (o1 == null || o2 == null) {
-                    return 0;
-                } else {
-                    return -o1.getDateTime().compareTo(o2.getDateTime());
-                }
+        for (NewsEntity newsEntity : newsEntities) {
+            Query query = new Query();
+            Criteria criteria = Criteria
+                    .where("title").is(newsEntity.getTitle())
+                    .and("content").is(newsEntity.getContent())
+                    .and("src").is(newsEntity.getSrc())
+                    ;
+
+            query.addCriteria(criteria);
+
+            List<NewsEntity> newStockEntities =  mongoTemplate.find(query, NewsEntity.class);
+            if (newStockEntities.size() == 0) {
+                mongoTemplate.save(newsEntity);
             }
-        };
+        }
+        return getNewsWithTradeDate(tradeDate);
+    }
 
-        Collections.sort(newsEntities, comparator);
+    @Override
+    public Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception {
+        Query query = new Query();
+        Date date = DateUtil.formatStringToDate(tradeDate, "yyyyMMdd");
 
-        return ResultUtil.buildSuccessResult(new Result<>(), newsEntities);
+        Criteria c = Criteria.where("dateTime").gte(date).lt(DateUtil.addDays(date, 1));
+        query.addCriteria(c);
+        query.with(new Sort(Sort.Direction.DESC, "dateTime"));
+        List<NewsEntity> newStockEntities =  mongoTemplate.find(query, NewsEntity.class);
+        return ResultUtil.buildSuccessResult(new Result<>(), newStockEntities);
+    }
+
+    @Override
+    public Result<Boolean> markNewsAsImportant(
+            @NonNull String title, @NonNull String content,
+            @NonNull String newsDate, @NonNull String src, @NonNull String srcStr) {
+
+//        Query query = new Query();
+//        query.with(new Sort(Sort.Direction.DESC, "issueDate"));
+//        Criteria criteria = Criteria.where("issueDate").gte(dateBefore).lt(dateAfter);
+//        query.addCriteria(criteria);
+//
+//        List<TuNewStockEntity> newStockEntities =  mongoTemplate.find(query, TuNewStockEntity.class);
+
+
+//        mongoTemplate
+        NewsEntity newsEntity = new NewsEntity();
+        newsEntity.setTitle(title);
+        newsEntity.setContent(content);
+        newsEntity.setSrc(src);
+        newsEntity.setSrcStr(srcStr);
+        Date date = DateUtil.formatStringToDate(newsDate, "yyyy-MM-dd HH:mm:ss");
+        newsEntity.setDateTime(date);
+        mongoTemplate.save(newsEntity);
+        return ResultUtil.buildSuccessResult(new Result<>(), true);
     }
 
     @Override
@@ -374,9 +413,18 @@ public class TuStockControllerImpl implements TuStockController {
         return "success";
     }
 
-//    @Override
-//    public String test2() throws Exception {
-//        List<AnalyzeEntity> analyzeEntities = getLastTwentyDaysAnalysisResultWithTradeDate("20190614").getModel();
-//        return JSON.toJSONString(analyzeContinuousStocksWithAnalyzeEntities(analyzeEntities));
-//    }
+    @Override
+    public String test2() throws Exception {
+
+        Query query = new Query();
+        Criteria criteria = Criteria.where("title").is("")
+                .and("content").is("市场消息：瑞士证券交易所据称考虑收购总部位于欧盟的交易所。")
+                .and("src").is("sina")
+                ;
+
+        query.addCriteria(criteria);
+
+        List<NewsEntity> newStockEntities =  mongoTemplate.find(query, NewsEntity.class);
+        return JSONObject.toJSONString(newStockEntities);
+    }
 }
