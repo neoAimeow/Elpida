@@ -136,7 +136,7 @@ public class TuStockControllerImpl implements TuStockController {
             Criteria criteria = Criteria
                     .where("title").is(newsEntity.getTitle())
                     .and("content").is(newsEntity.getContent())
-                    .and("src").is(newsEntity.getSrc())
+//                    .and("src").is(newsEntity.getSrc())
                     ;
 
             query.addCriteria(criteria);
