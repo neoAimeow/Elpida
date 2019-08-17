@@ -18,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -163,26 +164,11 @@ public class TuStockControllerImpl implements TuStockController {
 
     @Override
     public Result<Boolean> markNewsAsImportant(
-            @NonNull String title, @NonNull String content,
-            @NonNull String newsDate, @NonNull String src, @NonNull String srcStr) {
-
-//        Query query = new Query();
-//        query.with(new Sort(Sort.Direction.DESC, "issueDate"));
-//        Criteria criteria = Criteria.where("issueDate").gte(dateBefore).lt(dateAfter);
-//        query.addCriteria(criteria);
-//
-//        List<TuNewStockEntity> newStockEntities =  mongoTemplate.find(query, TuNewStockEntity.class);
-
-
-//        mongoTemplate
-        NewsEntity newsEntity = new NewsEntity();
-        newsEntity.setTitle(title);
-        newsEntity.setContent(content);
-        newsEntity.setSrc(src);
-        newsEntity.setSrcStr(srcStr);
-        Date date = DateUtil.formatStringToDate(newsDate, "yyyy-MM-dd HH:mm:ss");
-        newsEntity.setDateTime(date);
-        mongoTemplate.save(newsEntity);
+            @NonNull String id) {
+        mongoTemplate.updateFirst(
+                new Query(Criteria.where("id").is(id)),
+                Update.update("isMark", true),
+                NewsEntity.class);
         return ResultUtil.buildSuccessResult(new Result<>(), true);
     }
 

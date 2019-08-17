@@ -46,7 +46,7 @@ public interface TuStockController {
     Result<List<NewsEntity>> getNewsWithTradeDate(String tradeDate) throws Exception;
 
     @RequestMapping(value = "markNewsAsImportant", method = RequestMethod.GET)
-    Result<Boolean> markNewsAsImportant(String title, String content, String newsDate, String src, String srcStr);
+    Result<Boolean> markNewsAsImportant(String id);
 
     /** 获得股东增减持 */
     @RequestMapping(value = "getHoldingSharesChange", method = RequestMethod.GET)
