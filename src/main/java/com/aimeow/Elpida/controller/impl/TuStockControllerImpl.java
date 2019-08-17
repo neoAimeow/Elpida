@@ -173,7 +173,7 @@ public class TuStockControllerImpl implements TuStockController {
     }
 
     @Override
-    public Result<Boolean> unMarkNewsAsImportant(String id) {
+    public Result<Boolean> unMarkNewsAsImportant(@NonNull String id) {
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("id").is(id)),
                 Update.update("isMark", false),
