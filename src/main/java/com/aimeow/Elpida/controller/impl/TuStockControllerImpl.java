@@ -173,6 +173,16 @@ public class TuStockControllerImpl implements TuStockController {
     }
 
     @Override
+    public Result<Boolean> unMarkNewsAsImportant(String id) {
+        mongoTemplate.updateFirst(
+                new Query(Criteria.where("id").is(id)),
+                Update.update("isMark", false),
+                NewsEntity.class);
+        return ResultUtil.buildSuccessResult(new Result<>(), false);
+    }
+
+
+    @Override
     public Result<List<HoldingSharesEntity>> getHoldingShareChangeWithTradeDate(String tradeDate) throws Exception {
         List<HoldingSharesEntity> holdingSharesEntities = stockRequestWrapper.tuRequestHoldingSharesChangeWithTradeDate(
                 DateUtil.formatStringToDate(tradeDate, "yyyyMMdd"));
